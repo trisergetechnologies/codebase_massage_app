@@ -1,0 +1,6 @@
+/** Generate a 4-digit session OTP for start/end verification. */
+function genSessionOtp() {
+  return String(Math.floor(1000 + Math.random() * 9000));
+}
+
+module.exports = { genSessionOtp };

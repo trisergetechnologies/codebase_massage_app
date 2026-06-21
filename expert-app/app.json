@@ -1,0 +1,61 @@
+{
+  "expo": {
+    "name": "Codebase Massage Expert",
+    "slug": "codebase-massage-expert",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "scheme": "codebase-massage-expert",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f1115"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.codebase.massage.expert",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We share your live location with the customer who booked you.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We share your live location with the customer who booked you."
+      }
+    },
+    "android": {
+      "package": "com.codebase.massage.expert",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f1115"
+      },
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "plugins": [
+      "expo-dev-client",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0f1115",
+          "image": "./assets/splash.png",
+          "imageWidth": 200
+        }
+      ],
+      "expo-location",
+      "expo-font",
+      [
+        "expo-notifications",
+        {
+          "color": "#4ad295"
+        }
+      ]
+    ],
+    "extra": {
+      "apiBase": "http://10.0.2.2:4000",
+      "eas": {
+        "projectId": "586153d6-17d8-4f36-84b7-455c07127f90"
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Codebase Massage",
+    "slug": "codebase-massage-customer",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "codebase-massage",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.codebase.massage.customer",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to book a massage at your address."
+      }
+    },
+    "android": {
+      "package": "com.codebase.massage.customer",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-location",
+      "expo-font"
+    ],
+    "extra": {}
+  }
+}
