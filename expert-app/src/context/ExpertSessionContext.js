@@ -8,6 +8,7 @@ import {
   stopLocationPolling,
 } from "../services/locationService";
 import { getSocket, disconnectSocket, onDispatchOffer } from "../socket";
+import { registerPushToken } from "../services/pushService";
 
 const ExpertSessionContext = createContext(null);
 
@@ -144,6 +145,7 @@ export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 
         }
         if (!mounted) return;
         await connectRealtime().catch(() => {});
+        registerPushToken().catch(() => {});
       } catch (e) {
         if (e.status !== 404) {
           Alert.alert("Could not load profile", e.message);

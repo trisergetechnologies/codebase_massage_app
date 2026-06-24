@@ -14,7 +14,8 @@ export default function CartScreen({ navigation }) {
   const [loc, setLoc] = useState(null);
   const [permErr, setPermErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const [discount, setDiscount] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -35,19 +36,36 @@ export default function CartScreen({ navigation }) {
   }, []);
 
   const tax = Math.round(cart.total * 0.05);
-  const grand = cart.total + tax;
+  const grand = Math.max(0, cart.total + tax - couponDiscount);
+
+  async function applyCoupon() {
+    Alert.prompt("Discount code", "Enter your coupon", async (code) => {
+      if (!code?.trim()) return;
+      try {
+        const res = await api.validateCoupon(code.trim());
+        if (res.valid) {
+          setCouponCode(res.code);
+          setCouponDiscount(res.discount);
+          Alert.alert("Applied", `₹${res.discount} off`);
+        } else {
+          Alert.alert("Invalid code", "That coupon is not valid.");
+        }
+      } catch (e) {
+        Alert.alert("Error", e.message);
+      }
+    });
+  }
 
   async function book() {
     if (!loc) return;
     setBusy(true);
     try {
-      // Expand cart by quantity for backend (one line item per body)
       const ids = cart.items.flatMap((i) => Array(i.quantity || 1).fill(i.id));
       const booking = await api.createBooking(ids, {
         lat: loc.coords.latitude,
         lng: loc.coords.longitude,
         address: "Current location",
-      });
+      }, { couponCode: couponDiscount ? couponCode : "" });
       cart.clear();
       navigation.replace("Booking", { bookingId: booking.id });
     } catch (e) {
@@ -113,9 +131,9 @@ export default function CartScreen({ navigation }) {
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Feather name="tag" size={14} color={palette.textSecondary} />
                 <Text variant="bodySm" color="secondary" style={{ marginLeft: spacing.sm, flex: 1 }}>
-                  {discount ? discount : "Enter discount code"}
+                  {couponCode ? `${couponCode} (−₹${couponDiscount})` : "Enter discount code"}
                 </Text>
-                <Pressable hitSlop={8} onPress={() => Alert.alert("Coupons coming soon")}>
+                <Pressable hitSlop={8} onPress={applyCoupon}>
                   <Text variant="bodySmMd" color="ink">Apply</Text>
                 </Pressable>
               </View>

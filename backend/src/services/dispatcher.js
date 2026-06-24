@@ -130,6 +130,28 @@ function offerToExpert(io, booking, candidate) {
   });
 }
 
+const scheduledTimers = new Map();
+
+function scheduleDispatch(io, bookingId, scheduledFor) {
+  const delay = new Date(scheduledFor).getTime() - Date.now();
+  if (delay <= 0) {
+    return runDispatch(io, bookingId);
+  }
+  const timer = setTimeout(() => {
+    scheduledTimers.delete(bookingId.toString());
+    runDispatch(io, bookingId);
+  }, Math.min(delay, 2147483647));
+  scheduledTimers.set(bookingId.toString(), timer);
+}
+
+function cancelScheduledDispatch(bookingId) {
+  const timer = scheduledTimers.get(bookingId.toString());
+  if (timer) {
+    clearTimeout(timer);
+    scheduledTimers.delete(bookingId.toString());
+  }
+}
+
 async function runDispatch(io, bookingId) {
   const aborter = { aborted: false };
   dispatchAborters.set(bookingId.toString(), aborter);
@@ -276,6 +298,8 @@ function getPendingOffer(expertId) {
 
 module.exports = {
   runDispatch,
+  scheduleDispatch,
+  cancelScheduledDispatch,
   handleExpertResponse,
   abortDispatch,
   getPendingOffer,

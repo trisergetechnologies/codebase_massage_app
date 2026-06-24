@@ -51,6 +51,14 @@ const expertSchema = new mongoose.Schema(
       enum: ["pending", "in_progress", "completed"],
       default: "pending",
     },
+
+    kycStatus: {
+      type: String,
+      enum: ["pending", "submitted", "verified", "rejected"],
+      default: "pending",
+    },
+    kycNote: { type: String, default: "" },
+    kycSubmittedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );

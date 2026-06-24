@@ -24,6 +24,7 @@ export function ServiceDetailPage() {
 
   const [service, setService] = useState(null);
   const [categories, setCategories] = useState([]);
+  const [reviews, setReviews] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -36,11 +37,16 @@ export function ServiceDetailPage() {
     setLoading(true);
     setError("");
 
-    Promise.all([catalogService.getService(id), catalogService.listCategories()])
-      .then(([svc, cats]) => {
+    Promise.all([
+      catalogService.getService(id),
+      catalogService.listCategories(),
+      catalogService.getReviews(id).catch(() => null),
+    ])
+      .then(([svc, cats, rev]) => {
         if (!cancelled) {
           setService(svc);
           setCategories(cats);
+          setReviews(rev);
         }
       })
       .catch((e) => {
@@ -207,6 +213,24 @@ export function ServiceDetailPage() {
             </div>
           </div>
         </div>
+
+        {reviews && reviews.count > 0 && (
+          <div className="mt-10 rounded-2xl border border-border bg-white p-6">
+            <h2 className="text-lg font-semibold text-ink">
+              Customer reviews · {(reviews.averageRating || 0).toFixed(1)}★ ({reviews.count})
+            </h2>
+            <ul className="mt-4 space-y-4">
+              {reviews.reviews.map((r, i) => (
+                <li key={i} className="border-t border-border pt-4 first:border-0 first:pt-0">
+                  <p className="text-sm font-medium text-ink">
+                    {r.customerName} · {"★".repeat(r.stars)}
+                  </p>
+                  {r.comment && <p className="mt-1 text-sm text-sub">{r.comment}</p>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -9,6 +9,10 @@ export const catalogService = {
     return apiRequest(`/api/services/${encodeURIComponent(id)}`);
   },
 
+  getReviews(id) {
+    return apiRequest(`/api/services/${encodeURIComponent(id)}/reviews`);
+  },
+
   listCategories() {
     return apiRequest("/api/categories");
   },

@@ -40,10 +40,13 @@ const bookingSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["created", "searching", "assigned", "in_progress", "completed", "cancelled"],
+      enum: ["created", "scheduled", "searching", "assigned", "in_progress", "completed", "cancelled"],
       default: "created",
       index: true,
     },
+
+    scheduledFor: { type: Date, default: null, index: true },
+    couponCode: { type: String, default: "" },
 
     // Quoted ETA snapshot at assignment-time (minutes).
     quotedEtaMin: { type: Number, default: null },
@@ -51,6 +54,8 @@ const bookingSchema = new mongoose.Schema(
     pricing: {
       subtotal: { type: Number, default: 0 },
       tax: { type: Number, default: 0 },
+      discount: { type: Number, default: 0 },
+      surgeMultiplier: { type: Number, default: 1 },
       total: { type: Number, default: 0 },
       currency: { type: String, default: "INR" },
     },
@@ -100,12 +105,15 @@ const bookingSchema = new mongoose.Schema(
 
 bookingSchema.plugin(publicIdPlugin);
 
-bookingSchema.methods.recomputePricing = function () {
-  const subtotal = this.items.reduce((sum, it) => sum + (it.price || 0), 0);
+bookingSchema.methods.recomputePricing = function (surgeMultiplier = 1, discount = 0) {
+  const base = this.items.reduce((sum, it) => sum + (it.price || 0), 0);
+  const subtotal = Math.round(base * surgeMultiplier);
   const tax = Math.round(subtotal * 0.05);
   this.pricing.subtotal = subtotal;
+  this.pricing.surgeMultiplier = surgeMultiplier;
+  this.pricing.discount = discount;
   this.pricing.tax = tax;
-  this.pricing.total = subtotal + tax;
+  this.pricing.total = Math.max(0, subtotal + tax - discount);
   return this.pricing;
 };
 

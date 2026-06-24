@@ -275,6 +275,27 @@ export default function BookingScreen({ route, navigation }) {
         </>
       )}
 
+      {booking.status === "completed" && !booking.rating?.stars && (
+        <>
+          <View style={{ height: spacing.md }} />
+          <Button
+            title="Rate session (5★)"
+            variant="subtle"
+            fullWidth
+            onPress={async () => {
+              try {
+                await api.rate(bookingId, 5, "");
+                const fresh = await api.getBooking(bookingId);
+                setBooking(fresh);
+                Alert.alert("Thanks!", "Your rating was submitted.");
+              } catch (e) {
+                Alert.alert("Could not rate", e.message);
+              }
+            }}
+          />
+        </>
+      )}
+
       {!["completed", "cancelled"].includes(booking.status) && (
         <>
           <View style={{ height: spacing.md }} />

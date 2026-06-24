@@ -194,10 +194,15 @@ All in `backend/.env`:
 - **Admin auth** — admin pages currently hit unauthenticated `/admin/*` routes. Add a `requireAuth("admin")` middleware backed by an admin JWT before shipping.
 - **Multi-instance scaling** — the dispatcher's pending-offer map is in-process. For HA, swap `Map` for Redis pub/sub so any node can route accept/decline.
 
-## Roadmap
+## Roadmap (completed in codebase)
 
-- Reviews & ratings tab in admin
-- Expert earnings ledger
-- Surge pricing per H3 cell at peak demand
-- Time-window bookings (schedule for later, not just now)
-- KYC & background-check workflow for new experts
+- Reviews & ratings tab in admin (`/reviews`)
+- Expert earnings screen + ledger API
+- Surge pricing per H3 cell (`GET /api/surge`, applied at booking)
+- Time-window bookings (`scheduledFor` + `scheduled` status)
+- KYC workflow for experts (`POST /api/expert/kyc`)
+- Expert training module (in-app progress)
+- Coupon codes (`WELCOME10`, `RELAX20` by default)
+- Production hooks: MSG91/Twilio OTP, Razorpay payments, Expo push (`EXPO_PUSH_ENABLED`)
+
+**Still requires external setup for production:** Redis HA dispatch for multi-server deployments.

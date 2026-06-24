@@ -107,6 +107,38 @@ const respondOffer = asyncHandler(async (req, res) => {
   res.json({ ok });
 });
 
+const submitKyc = asyncHandler(async (req, res) => {
+  const expert = await requireExpert(req, res);
+  if (!expert) return;
+  const { note } = req.body;
+  const updated = await Expert.findByIdAndUpdate(
+    expert._id,
+    {
+      kycStatus: "submitted",
+      kycNote: note || "",
+      kycSubmittedAt: new Date(),
+    },
+    { new: true }
+  );
+  res.json(await serializeExpert(updated));
+});
+
+const updateTraining = asyncHandler(async (req, res) => {
+  const expert = await requireExpert(req, res);
+  if (!expert) return;
+  const { status } = req.body;
+  const allowed = ["pending", "in_progress", "completed"];
+  if (!allowed.includes(status)) {
+    return res.status(400).json({ error: "invalid_training_status" });
+  }
+  const updated = await Expert.findByIdAndUpdate(
+    expert._id,
+    { trainingStatus: status },
+    { new: true }
+  );
+  res.json(await serializeExpert(updated));
+});
+
 module.exports = {
   me,
   updateProfile,
@@ -117,4 +149,6 @@ module.exports = {
   earnings,
   pendingOffer,
   respondOffer,
+  submitKyc,
+  updateTraining,
 };

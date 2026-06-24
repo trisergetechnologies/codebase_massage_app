@@ -88,6 +88,8 @@ function serializeBooking(booking) {
     payment: o.payment,
     timeline: o.timeline,
     rating: o.rating,
+    scheduledFor: o.scheduledFor || null,
+    couponCode: o.couponCode || "",
     createdAt: o.createdAt,
     updatedAt: o.updatedAt,
     sessionOtp: o.sessionOtp
@@ -128,6 +130,9 @@ async function serializeExpert(expert) {
     lastLocation: o.lastLocation,
     activeBooking,
     trainingStatus: o.trainingStatus || "pending",
+    kycStatus: o.kycStatus || "pending",
+    kycNote: o.kycNote || "",
+    kycSubmittedAt: o.kycSubmittedAt || null,
     createdAt: o.createdAt,
     updatedAt: o.updatedAt,
   };

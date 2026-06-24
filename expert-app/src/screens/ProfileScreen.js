@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { View, Image, ScrollView, Pressable, StyleSheet, Alert } from "react-native";
+import { View, Image, ScrollView, Pressable, StyleSheet } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
@@ -14,7 +14,14 @@ const TRAINING_LABELS = {
   completed: "Completed",
 };
 
-export default function ProfileScreen() {
+const KYC_LABELS = {
+  pending: "Not submitted",
+  submitted: "Under review",
+  verified: "Verified",
+  rejected: "Needs update",
+};
+
+export default function ProfileScreen({ navigation }) {
   const { me, loading, refreshMe, logout } = useExpertSession();
 
   useFocusEffect(
@@ -50,19 +57,27 @@ export default function ProfileScreen() {
         </View>
 
         <MenuRow
+          icon="edit-2"
+          label="Edit profile"
+          onPress={() => navigation.getParent()?.navigate("ProfileEdit")}
+        />
+        <MenuRow
           icon="book-open"
           label="Training"
           value={TRAINING_LABELS[me.trainingStatus] || me.trainingStatus}
-          onPress={() =>
-            Alert.alert("Training", "Partner training module — coming soon.")
-          }
+          onPress={() => navigation.getParent()?.navigate("Training")}
+        />
+        <MenuRow
+          icon="shield"
+          label="KYC & profile"
+          value={KYC_LABELS[me.kycStatus] || me.kycStatus}
+          onPress={() => navigation.getParent()?.navigate("Kyc")}
         />
         <MenuRow
           icon="headphones"
           label="Support"
-          onPress={() => Alert.alert("Support", "Contact ops@codebasemassage.com")}
+          onPress={() => navigation.getParent()?.navigate("Support")}
         />
-        <MenuRow icon="shield" label="KYC & profile" onPress={() => Alert.alert("KYC", "One-go KYC flow — coming soon.")} />
         <MenuRow icon="log-out" label="Logout" onPress={logout} danger />
       </ScrollView>
     </SafeAreaView>
@@ -90,24 +105,24 @@ function MenuRow({ icon, label, value, onPress, danger }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  scroll: { padding: spacing.lg, paddingBottom: spacing.xxl },
+  scroll: { padding: spacing.xl, paddingBottom: spacing.xxl * 2 },
   hero: {
     flexDirection: "row",
     alignItems: "center",
     gap: spacing.lg,
-    marginTop: spacing.lg,
-    marginBottom: spacing.xl,
-    backgroundColor: colors.surface,
+    marginTop: spacing.xl,
+    marginBottom: spacing.lg,
     padding: spacing.lg,
-    borderRadius: radii.lg,
+    backgroundColor: colors.surface,
+    borderRadius: radii.xl,
     borderWidth: 1,
     borderColor: colors.border,
   },
-  avatar: { width: 64, height: 64, borderRadius: 32 },
+  avatar: { width: 72, height: 72, borderRadius: 36 },
   avatarFallback: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: colors.surfaceAlt,
     alignItems: "center",
     justifyContent: "center",
@@ -115,11 +130,8 @@ const styles = StyleSheet.create({
   menuRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: colors.surface,
-    padding: spacing.lg,
-    borderRadius: radii.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
+    paddingVertical: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
 });

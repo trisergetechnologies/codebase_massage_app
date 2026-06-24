@@ -1,10 +1,11 @@
-export const ACTIVE_STATUSES = ["created", "searching", "assigned", "in_progress"];
+export const ACTIVE_STATUSES = ["created", "scheduled", "searching", "assigned", "in_progress"];
 export const COMPLETED_STATUSES = ["completed"];
 export const CANCELLED_STATUSES = ["cancelled"];
 
 export function formatStatus(status) {
   const map = {
     created: "Confirmed",
+    scheduled: "Scheduled",
     searching: "Finding expert",
     assigned: "Expert assigned",
     in_progress: "In progress",
