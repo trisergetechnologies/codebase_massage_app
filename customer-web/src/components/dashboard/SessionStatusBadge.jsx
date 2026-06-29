@@ -15,7 +15,7 @@ export function SessionStatusBadge({ status }) {
   else if (CANCELLED_STATUSES.includes(status)) tone = toneMap.cancelled;
 
   return (
-    <span className={`inline-flex rounded-md px-2 py-0.5 text-xs font-medium ${tone}`}>
+    <span className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-semibold tracking-wide ${tone}`}>
       {formatStatus(status)}
     </span>
   );

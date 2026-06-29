@@ -17,13 +17,13 @@ export function CartDrawer({ onProceed }) {
         onClick={() => setOpen(false)}
       />
       <aside
-        className="fixed inset-y-0 right-0 z-[200] flex w-full max-w-[420px] flex-col border-l border-border bg-white shadow-2xl"
+        className="fixed inset-y-0 right-0 z-[200] flex w-full max-w-[420px] flex-col border-l border-border/80 bg-white shadow-premium-lg"
         aria-label="Your booking"
       >
-        <div className="flex items-center justify-between border-b border-border px-6 py-5">
+        <div className="flex items-center justify-between border-b border-border/80 bg-surface/50 px-6 py-5">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-muted">Your booking</p>
-            <h2 className="mt-1 text-lg font-semibold text-ink">
+            <p className="eyebrow">Your booking</p>
+            <h2 className="mt-1 font-display text-lg font-bold text-ink">
               {totals.count} session{totals.count === 1 ? "" : "s"}
             </h2>
           </div>
@@ -90,7 +90,7 @@ export function CartDrawer({ onProceed }) {
         </div>
 
         {!isEmpty && (
-          <div className="border-t border-border bg-[#fafafa] px-6 py-5">
+          <div className="border-t border-border/80 bg-surface/80 px-6 py-5 backdrop-blur-sm">
             <div className="flex justify-between text-sm text-sub">
               <span>Total duration</span>
               <span className="font-medium text-ink">{totals.minutes} min</span>

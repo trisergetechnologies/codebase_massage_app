@@ -13,8 +13,8 @@ const serviceMeta = [
 
 export function ServicesSection() {
   return (
-    <section id="services" className="bg-sand py-20 md:py-28">
-      <div className="mx-auto max-w-[1200px] px-4 md:px-8">
+    <section id="services" className="section-pad bg-sand">
+      <div className="container-premium">
         <SectionHeader
           label="What we offer"
           title="Targeted relief for the discomfort you feel today"
@@ -28,7 +28,7 @@ export function ServicesSection() {
             return (
               <article
                 key={service.name}
-                className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-accent/25 hover:shadow-lg ${meta.span}`}
+                className={`group relative flex flex-col overflow-hidden rounded-2xl border border-border/70 bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-accent/20 hover:shadow-premium ${meta.span}`}
               >
                 <div
                   className={`mb-5 flex items-center justify-between rounded-xl bg-gradient-to-br ${meta.tone} p-4 ${meta.span.includes("row-span") ? "min-h-[120px]" : ""}`}
@@ -60,7 +60,7 @@ export function ServicesSection() {
         <div className="mt-10 flex justify-center">
           <Link
             to="/services"
-            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-accent px-8 text-base font-bold text-white shadow-md transition hover:bg-[#0d6b63] hover:shadow-lg"
+            className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-accent px-8 text-base font-bold text-white shadow-md transition hover:bg-accent-hover hover:shadow-lg"
           >
             Explore Services
             <ArrowUpRight size={18} />

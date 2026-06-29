@@ -10,21 +10,22 @@ export function FloatingCartBar() {
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-white/95 px-4 py-3 shadow-[0_-8px_32px_rgba(15,20,25,0.08)] backdrop-blur-xl lg:hidden"
       style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
     >
       <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">
-            {label} · ₹{totals.price.toLocaleString("en-IN")}
+          <p className="truncate text-sm font-semibold text-ink">
+            {label}
           </p>
+          <p className="text-xs text-muted">Tap to review & book</p>
         </div>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="shrink-0 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0d6b63] active:scale-[0.98]"
+          className="shrink-0 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-hover hover:shadow-md active:scale-[0.98]"
         >
-          View cart
+          View cart · ₹{totals.price.toLocaleString("en-IN")}
         </button>
       </div>
     </div>

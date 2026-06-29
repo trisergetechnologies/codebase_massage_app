@@ -6,8 +6,8 @@ const icons = [Clock, Sparkles, IndianRupee, HeartHandshake];
 
 export function WhySection() {
   return (
-    <section className="bg-white py-20 md:py-28">
-      <div className="mx-auto max-w-[1200px] px-4 md:px-8">
+    <section className="section-pad bg-surface">
+      <div className="container-premium">
         <SectionHeader
           label="Why customers choose us"
           title="Fast physical relief at home"
@@ -20,15 +20,14 @@ export function WhySection() {
           {brand.whyChoose.map((item, i) => {
             const Icon = icons[i];
             return (
-              <article
-                key={item.title}
-                className="flex gap-5 rounded-2xl border border-border p-6 md:p-8"
-              >
-                <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-surface text-accent">
+              <article key={item.title} className="card-premium flex gap-5 p-6 md:p-8">
+                <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-accent-soft text-accent ring-1 ring-accent/10">
                   <Icon size={26} strokeWidth={1.75} />
                 </span>
                 <div>
-                  <h3 className="text-lg font-semibold text-ink">{item.title}</h3>
+                  <h3 className="font-display text-lg font-bold tracking-tight text-ink">
+                    {item.title}
+                  </h3>
                   <p className="mt-2 text-[15px] leading-7 text-sub">{item.body}</p>
                 </div>
               </article>

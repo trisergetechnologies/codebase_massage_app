@@ -89,10 +89,10 @@ export function Nav() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 transition-colors duration-300 ${
+        className={`sticky top-0 z-50 transition-all duration-300 ${
           onLanding && heroNav
             ? "border-b border-transparent bg-transparent text-white"
-            : "border-b border-border/80 bg-white/95 text-ink backdrop-blur-md"
+            : "border-b border-border/60 bg-white/90 text-ink shadow-xs backdrop-blur-xl"
         }`}
       >
         <div className="mx-auto flex h-16 min-h-[4rem] max-w-[1200px] items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 md:h-[4.75rem] md:px-8">
@@ -104,13 +104,15 @@ export function Nav() {
             onClick={closeMenu}
           >
             <span
-              className={`grid size-9 shrink-0 place-items-center rounded-xl text-xs font-bold sm:size-10 sm:text-sm ${
-                onLanding && heroNav ? "bg-white text-forest" : "bg-accent text-white"
+              className={`grid size-9 shrink-0 place-items-center rounded-xl font-display text-xs font-extrabold tracking-tight sm:size-10 sm:text-sm ${
+                onLanding && heroNav
+                  ? "bg-white text-forest shadow-sm"
+                  : "bg-accent text-white shadow-sm ring-1 ring-accent/20"
               }`}
             >
               R
             </span>
-            <span className="hidden truncate font-display text-[15px] font-bold sm:inline">
+            <span className="hidden truncate font-display text-[15px] font-bold tracking-tight sm:inline">
               Relief, Delivered
             </span>
           </Link>

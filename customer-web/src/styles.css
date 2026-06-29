@@ -16,18 +16,19 @@
   --space-12: 96px;
 
   --color-bg: #ffffff;
-  --color-surface: #f7f8fa;
-  --color-border: #e8eaed;
-  --color-text: #111827;
-  --color-text-secondary: #4b5563;
+  --color-surface: #f8f9fb;
+  --color-border: #e5e7eb;
+  --color-text: #0f1419;
+  --color-text-secondary: #374151;
   --color-text-muted: #6b7280;
   --color-accent: #0f766e;
   --color-accent-soft: #ecfdf5;
 
   --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", system-ui, sans-serif;
   --max-width: 1200px;
 
-  --dashboard-sidebar-width: 240px;
+  --dashboard-sidebar-width: 260px;
   --dashboard-content-max: 1280px;
   --header-height: 4rem;
 }
@@ -53,16 +54,61 @@
     margin: 0;
     min-width: 320px;
     font-family: var(--font-sans);
-    font-size: 18px;
+    font-size: 16px;
     line-height: 1.6;
     color: var(--color-text);
     background: var(--color-bg);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: rgba(15, 118, 110, 0.15);
+    color: #042f2e;
   }
 
   :focus-visible {
     outline: 2px solid var(--color-accent);
     outline-offset: 2px;
+  }
+}
+
+@layer components {
+  .card-premium {
+    @apply rounded-2xl border border-border/80 bg-white shadow-premium transition duration-300;
+  }
+
+  .card-premium:hover {
+    @apply shadow-premium-lg border-border;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-accent;
+  }
+
+  .eyebrow-light {
+    @apply text-xs font-semibold uppercase tracking-[0.14em] text-teal-300;
+  }
+
+  .glass-panel {
+    @apply border border-white/20 bg-white/10 backdrop-blur-md;
+  }
+
+  .section-pad {
+    @apply py-20 md:py-28 lg:py-32;
+  }
+
+  .container-premium {
+    @apply mx-auto max-w-[1200px] px-4 md:px-8;
+  }
+
+  .btn-premium-primary {
+    @apply inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-white px-8 text-base font-bold text-forest shadow-lg shadow-black/15 transition duration-300 hover:bg-sand hover:shadow-xl hover:shadow-black/20;
+  }
+
+  .input-premium {
+    @apply h-12 w-full rounded-xl border border-border/80 bg-white px-4 text-base text-ink shadow-xs transition placeholder:text-muted focus:border-accent/40 focus:outline-none focus:ring-2 focus:ring-accent/15;
   }
 }
 
@@ -76,24 +122,36 @@
   }
 
   .animate-delay-1 {
-    animation-delay: 0.08s;
+    animation-delay: 0.1s;
   }
   .animate-delay-2 {
-    animation-delay: 0.16s;
+    animation-delay: 0.2s;
   }
   .animate-delay-3 {
-    animation-delay: 0.24s;
+    animation-delay: 0.3s;
   }
 
   .text-gradient-accent {
-    background: linear-gradient(135deg, #5eead4 0%, #fbbf24 55%, #99f6e4 100%);
+    background: linear-gradient(135deg, #5eead4 0%, #d4af37 45%, #99f6e4 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-gradient-ink {
+    background: linear-gradient(135deg, #0f1419 0%, #374151 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
 
   .landing-noise {
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+
+  .divider-fade {
+    background: linear-gradient(90deg, transparent, #e5e7eb 20%, #e5e7eb 80%, transparent);
+    height: 1px;
   }
 }
 
@@ -104,7 +162,8 @@
   .animate-fade-up,
   .animate-float,
   .animate-marquee,
-  .animate-pulse-glow {
+  .animate-pulse-glow,
+  .animate-shimmer {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;
