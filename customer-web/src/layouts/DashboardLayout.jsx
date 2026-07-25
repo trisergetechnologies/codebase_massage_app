@@ -65,7 +65,7 @@ function DesktopSidebar({ user, onSignOut, onBook }) {
           </span>
           <div className="min-w-0">
             <p className="truncate font-display text-sm font-bold tracking-tight text-ink">
-              Relief, Delivered
+              Reliefhai
             </p>
             <p className="text-xs text-muted">Your account</p>
           </div>

@@ -24,7 +24,7 @@ export function LandingPage() {
     <div className="pb-20 md:pb-0">
       <HeroSection />
       <PainPointsSection />
-      <TrustBar />
+      
       <ServicesSection />
       <HowItWorksSection />
       <WhySection />
