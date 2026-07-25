@@ -2,20 +2,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { bookingService } from "../../services/bookingService";
-import { formatStatus, ACTIVE_STATUSES } from "../../lib/bookingStatus";
-import {
-  sessionTitle,
-  formatSessionDate,
-  formatCurrency,
-} from "../../lib/dashboardStats";
-import { SessionTimeline } from "../../components/dashboard/SessionTimeline";
-import { BookingMap } from "../../components/tracking/BookingMap";
-import { Skeleton } from "../../components/ui/Skeleton";
 import { friendlyError, cancelReasonMessage, toastMessages } from "../../lib/messages";
 import { useToast } from "../../context/ToastContext";
 import { getSocket } from "../../socket";
-
-const MAP_STATUSES = ["assigned", "in_progress"];
+import { SkeletonTracking } from "../../components/ui/Skeleton";
+import { TrackingStateView } from "../../components/tracking/TrackingStateView";
 
 export function OrderTrackingPage() {
   const { id } = useParams();
@@ -23,7 +14,10 @@ export function OrderTrackingPage() {
   const toast = useToast();
   const [booking, setBooking] = useState(null);
   const [expertLoc, setExpertLoc] = useState(null);
+  const [candidateEtaMin, setCandidateEtaMin] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [paying, setPaying] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const loadBooking = useCallback(async () => {
     const b = await bookingService.get(id);
@@ -43,7 +37,7 @@ export function OrderTrackingPage() {
 
     async function init() {
       try {
-        const b = await loadBooking();
+        await loadBooking();
         if (cancelled) return;
 
         try {
@@ -51,18 +45,43 @@ export function OrderTrackingPage() {
           socket.emit("booking:subscribe", { bookingId: id });
 
           socket.on("booking:status", (payload) => {
-            setBooking((prev) => (prev ? { ...prev, status: payload.status } : prev));
+            setBooking((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    status: payload.status,
+                    cancelReason: payload.cancelReason ?? prev.cancelReason,
+                  }
+                : prev
+            );
             loadBooking().catch(() => {});
           });
 
           socket.on("booking:assigned", (data) => {
+            setCandidateEtaMin(null);
             loadBooking().catch(() => {});
             if (data.expert?.location) setExpertLoc(data.expert.location);
-            toast.success("Expert assigned");
+            const name = data.expert?.name || "Expert";
+            const eta = data.etaMin ?? data.expert?.etaMin ?? "—";
+            toast.success(`Expert assigned · ${name} · ${eta} min`);
+          });
+
+          socket.on("booking:searching", ({ candidateEtaMin: eta }) => {
+            if (eta != null) setCandidateEtaMin(eta);
+          });
+
+          socket.on("booking:payment", () => {
+            loadBooking().catch(() => {});
+            toast.success(toastMessages.paymentSuccess);
           });
 
           socket.on("booking:expert_location", ({ lat, lng }) => {
             setExpertLoc({ lat, lng });
+            loadBooking().catch(() => {});
+          });
+
+          socket.on("booking:arrived", () => {
+            loadBooking().catch(() => {});
           });
 
           socket.on("booking:failed", ({ reason }) => {
@@ -70,7 +89,7 @@ export function OrderTrackingPage() {
             loadBooking().catch(() => {});
           });
         } catch {
-          /* socket optional — polling still works */
+          /* socket optional */
         }
       } catch (e) {
         if (!cancelled) toast.error(friendlyError(e.message));
@@ -91,136 +110,81 @@ export function OrderTrackingPage() {
         socket.emit("booking:unsubscribe", { bookingId: id });
         socket.off("booking:status");
         socket.off("booking:assigned");
+        socket.off("booking:searching");
+        socket.off("booking:payment");
         socket.off("booking:expert_location");
+        socket.off("booking:arrived");
         socket.off("booking:failed");
       }
     };
   }, [id, loadBooking, toast]);
 
+  async function handlePay() {
+    setPaying(true);
+    try {
+      const updated = await bookingService.pay(id);
+      setBooking(updated);
+      toast.success(toastMessages.paymentSuccess);
+    } catch (e) {
+      toast.error(friendlyError(e.message));
+    } finally {
+      setPaying(false);
+    }
+  }
+
+  async function handleCancel() {
+    if (!window.confirm("Cancel this booking?")) return;
+    setCancelling(true);
+    try {
+      await bookingService.cancel(id);
+      await loadBooking();
+      toast.success("Booking cancelled.");
+    } catch (e) {
+      toast.error(friendlyError(e.message));
+    } finally {
+      setCancelling(false);
+    }
+  }
+
   if (loading) {
-    return (
-      <div className="space-y-4 lg:grid lg:grid-cols-5 lg:gap-8 lg:space-y-0">
-        <Skeleton className="h-8 w-40 lg:col-span-5" />
-        <Skeleton className="h-64 rounded-2xl lg:col-span-3" />
-        <Skeleton className="h-96 rounded-2xl lg:col-span-2" />
-      </div>
-    );
+    return <SkeletonTracking />;
   }
 
   if (!booking) {
     return (
-      <p className="text-sub">
+      <p className="type-body text-sub">
         Order not found.{" "}
-        <Link to="/app/orders" className="font-medium text-accent">
+        <Link to="/app/orders" className="font-medium text-brand">
           Back to My Orders
         </Link>
       </p>
     );
   }
 
-  const title = sessionTitle(booking);
-  const isLive = ACTIVE_STATUSES.includes(booking.status);
-  const showMap = MAP_STATUSES.includes(booking.status);
-  const isSearching = booking.status === "searching";
-  const isCancelled = booking.status === "cancelled";
-
-  const summaryCard = (
-    <div className="rounded-2xl border border-border bg-white p-5 shadow-sm lg:p-6">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold text-ink lg:text-xl">{title}</h2>
-          <p className="mt-1 text-sm text-sub">{formatSessionDate(booking.createdAt)}</p>
-        </div>
-        {isLive && (
-          <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent">
-            <span className="size-2 rounded-full bg-accent animate-pulse" />
-            Live
-          </span>
-        )}
-      </div>
-      <p className="mt-3 text-base font-medium text-accent">
-        {formatStatus(booking.status)}
-        {booking.quotedEtaMin && booking.status === "assigned"
-          ? ` · ~${booking.quotedEtaMin} min`
-          : ""}
-      </p>
-      {isSearching && (
-        <p className="mt-2 text-sm text-sub">{toastMessages.findingExperts}</p>
-      )}
-      {isCancelled && (
-        <p className="mt-2 text-sm text-sub">{cancelReasonMessage(booking.cancelReason)}</p>
-      )}
-      <p className="mt-2 text-lg font-semibold text-ink lg:text-2xl">
-        {formatCurrency(booking.pricing?.total)}
-      </p>
-    </div>
-  );
-
-  const detailsCards = (
-    <>
-      {booking.expert?.name && (
-        <div className="rounded-2xl border border-border bg-white p-5 lg:p-6">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted">Expert</p>
-          <p className="mt-2 font-semibold text-ink">{booking.expert.name}</p>
-          {booking.expert.phone && (
-            <p className="mt-1 text-sm text-sub">{booking.expert.phone}</p>
-          )}
-        </div>
-      )}
-
-      <div className="rounded-2xl border border-border bg-white p-5 lg:p-6">
-        <p className="text-xs font-medium uppercase tracking-wider text-muted">Address</p>
-        <p className="mt-2 text-sm leading-relaxed text-ink">
-          {booking.location?.address || "Address on file"}
-        </p>
-      </div>
-
-      {(booking.items || []).length > 0 && (
-        <div className="rounded-2xl border border-border bg-white p-5 lg:p-6">
-          <p className="text-xs font-medium uppercase tracking-wider text-muted">Services</p>
-          <ul className="mt-3 space-y-2">
-            {booking.items.map((item) => (
-              <li key={item.id || item.name} className="flex justify-between text-sm">
-                <span className="text-sub">{item.name}</span>
-                <span className="font-medium text-ink">{formatCurrency(item.price)}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-    </>
-  );
+  const backLabel = booking.status === "completed" || booking.status === "cancelled"
+    ? "My Orders"
+    : "Back";
 
   return (
     <div className="-mt-2 lg:mt-0">
       <button
         type="button"
         onClick={() => navigate("/app/orders")}
-        className="mb-4 flex items-center gap-2 text-sm font-medium text-accent lg:mb-6"
+        className="mb-4 flex min-h-11 items-center gap-2 type-body font-medium text-brand lg:mb-6"
       >
         <ArrowLeft size={18} />
-        My Orders
+        {backLabel}
       </button>
 
-      <div className="lg:grid lg:grid-cols-5 lg:gap-8">
-        <div className="space-y-4 lg:col-span-3">
-          {summaryCard}
-          {showMap && (
-            <BookingMap booking={booking} expertLocation={expertLoc} />
-          )}
-          {isSearching && booking.location?.lat != null && (
-            <BookingMap booking={booking} expertLocation={null} />
-          )}
-          <div className="rounded-2xl border border-border bg-white p-5 lg:p-6">
-            <p className="mb-4 text-xs font-medium uppercase tracking-wider text-muted">
-              Progress
-            </p>
-            <SessionTimeline booking={booking} />
-          </div>
-        </div>
-
-        <div className="mt-4 space-y-4 lg:col-span-2 lg:mt-0">{detailsCards}</div>
-      </div>
+      <TrackingStateView
+        booking={booking}
+        candidateEtaMin={candidateEtaMin}
+        expertLoc={expertLoc}
+        onPay={handlePay}
+        paying={paying}
+        onCancel={handleCancel}
+        cancelling={cancelling}
+      />
     </div>
   );
 }

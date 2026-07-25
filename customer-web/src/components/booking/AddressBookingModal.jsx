@@ -14,12 +14,13 @@ function hasCoords(a) {
   return typeof a?.lat === "number" && typeof a?.lng === "number";
 }
 
-export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
+export function AddressBookingModal({ open, serviceIds, serviceCount = 0, orderTotal = null, onClose, onBooked }) {
   const { user, updateUser } = useAuth();
   const toast = useToast();
   const [selectedId, setSelectedId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [paymentTiming, setPaymentTiming] = useState("pay_later");
   const [form, setForm] = useState({
     label: "Home",
     line1: "",
@@ -38,6 +39,7 @@ export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
     const def = addresses.find((a) => a.isDefault) || addresses[0];
     setSelectedId(def?.id || "");
     setShowForm(addresses.length === 0);
+    setPaymentTiming("pay_later");
   }, [open, addresses]);
 
   async function saveAddress() {
@@ -67,20 +69,27 @@ export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
     if (!addr?.lat || !addr?.lng) {
       return toast.error(friendlyError("location_required"));
     }
-    const loadId = toast.loading(toastMessages.findingExperts);
+    const isPayNow = paymentTiming === "pay_now";
+    const loadId = isPayNow ? null : toast.loading(toastMessages.findingExperts);
     setLoading(true);
     try {
-      const booking = await bookingService.create(serviceIds, {
-        lat: addr.lat,
-        lng: addr.lng,
-        address: [addr.line1, addr.line2, addr.city, addr.pincode].filter(Boolean).join(", "),
-      });
-      toast.dismiss(loadId);
-      toast.success(toastMessages.bookingConfirmed);
+      const booking = await bookingService.create(
+        serviceIds,
+        {
+          lat: addr.lat,
+          lng: addr.lng,
+          address: [addr.line1, addr.line2, addr.city, addr.pincode].filter(Boolean).join(", "),
+        },
+        paymentTiming
+      );
+      if (loadId) toast.dismiss(loadId);
+      toast.success(
+        isPayNow ? toastMessages.bookingPayNowToast : toastMessages.bookingConfirmed
+      );
       onBooked?.(booking);
       onClose?.();
     } catch (e) {
-      toast.dismiss(loadId);
+      if (loadId) toast.dismiss(loadId);
       toast.error(friendlyError(e.message));
     } finally {
       setLoading(false);
@@ -190,6 +199,66 @@ export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
               + Add new address
             </button>
           )}
+
+        {!showForm && addresses.length > 0 && (
+          <div className="mt-8 space-y-3">
+            {serviceCount > 0 && orderTotal != null ? (
+              <div className="rounded-xl border border-border bg-surface px-4 py-3">
+                <p className="text-sm text-sub">
+                  {serviceCount} service{serviceCount !== 1 ? "s" : ""} selected
+                </p>
+                <p className="mt-1 text-lg font-semibold text-ink">
+                  Total ₹{Number(orderTotal).toLocaleString("en-IN")}
+                </p>
+              </div>
+            ) : null}
+            <p className="text-sm font-semibold text-ink">When would you like to pay?</p>
+              <label
+                className={`flex cursor-pointer gap-3 rounded-xl border p-4 transition ${
+                  paymentTiming === "pay_now"
+                    ? "border-accent bg-accent-soft"
+                    : "border-border hover:border-accent/30"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="paymentTiming"
+                  value="pay_now"
+                  checked={paymentTiming === "pay_now"}
+                  onChange={() => setPaymentTiming("pay_now")}
+                  className="mt-1 accent-accent"
+                />
+                <span>
+                  <span className="block font-semibold text-ink">Pay now</span>
+                  <span className="mt-0.5 block text-sm text-sub">
+                    Pay to confirm and find your expert
+                  </span>
+                </span>
+              </label>
+              <label
+                className={`flex cursor-pointer gap-3 rounded-xl border p-4 transition ${
+                  paymentTiming === "pay_later"
+                    ? "border-accent bg-accent-soft"
+                    : "border-border hover:border-accent/30"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="paymentTiming"
+                  value="pay_later"
+                  checked={paymentTiming === "pay_later"}
+                  onChange={() => setPaymentTiming("pay_later")}
+                  className="mt-1 accent-accent"
+                />
+                <span>
+                  <span className="block font-semibold text-ink">Pay later</span>
+                  <span className="mt-0.5 block text-sm text-sub">
+                    Find expert first, pay anytime before session ends
+                  </span>
+                </span>
+              </label>
+            </div>
+          )}
         </div>
 
         {!showForm && addresses.length > 0 && (
@@ -200,7 +269,7 @@ export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
               onClick={confirmBooking}
               disabled={loading || !selectedId}
             >
-              Confirm booking
+              {paymentTiming === "pay_now" ? "Continue to payment" : "Confirm & find expert"}
             </Button>
           </div>
         )}

@@ -23,7 +23,12 @@ export function OrderCard({ order, onPress }) {
         <AppText variant="caption" color="muted">
           {formatWhen(order.createdAt)}
         </AppText>
-        <AppText variant="h3">{formatRupee(order.pricing?.total)}</AppText>
+        <AppText variant="h3">
+          {formatRupee(
+            order.expertEarning ||
+              Math.round((order.pricing?.subtotal || 0) * 0.7)
+          )}
+        </AppText>
       </View>
     </Pressable>
   );

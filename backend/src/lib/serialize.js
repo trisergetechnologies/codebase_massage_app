@@ -64,10 +64,17 @@ function computeBookingDistanceKm(booking) {
   return Math.round(km * 10) / 10;
 }
 
+function computeLiveEtaMin(booking, distanceKm) {
+  if (distanceKm == null) return null;
+  if (!["assigned", "in_progress"].includes(booking.status)) return null;
+  return Math.max(1, Math.round(geo.etaMinutes(distanceKm)));
+}
+
 function serializeBooking(booking) {
   if (!booking) return null;
   const o = toPlain(booking);
   const distanceKm = computeBookingDistanceKm(o);
+  const liveEtaMin = computeLiveEtaMin(o, distanceKm);
   const out = {
     id: o.publicId,
     status: o.status,
@@ -84,8 +91,14 @@ function serializeBooking(booking) {
     location: o.location,
     quotedEtaMin: o.quotedEtaMin,
     distanceKm,
+    liveEtaMin,
     pricing: o.pricing,
-    payment: o.payment,
+    payment: {
+      status: o.payment?.status || "unpaid",
+      timing: o.payment?.timing || "pay_later",
+      method: o.payment?.method || "card_test",
+      providerRef: o.payment?.providerRef || "",
+    },
     timeline: o.timeline,
     rating: o.rating,
     createdAt: o.createdAt,

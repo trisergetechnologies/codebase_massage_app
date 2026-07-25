@@ -15,7 +15,7 @@ import { AppText } from "../components/ui/AppText";
 import { PrimaryButton } from "../components/ui/PrimaryButton";
 
 export default function LoginScreen({ onAuthed }) {
-  const [phone, setPhone] = useState("+919000000005");
+  const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [name, setName] = useState("");
   const [stage, setStage] = useState("phone");

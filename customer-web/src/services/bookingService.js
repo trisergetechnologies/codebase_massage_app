@@ -9,10 +9,10 @@ export const bookingService = {
     return apiRequest(`/api/bookings/${id}`);
   },
 
-  create(serviceIds, location) {
+  create(serviceIds, location, paymentTiming = "pay_later") {
     return apiRequest("/api/bookings", {
       method: "POST",
-      body: JSON.stringify({ serviceIds, location }),
+      body: JSON.stringify({ serviceIds, location, paymentTiming }),
     });
   },
 

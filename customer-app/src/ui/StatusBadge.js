@@ -4,9 +4,10 @@ import Text from "./Text";
 import { palette, radii, spacing } from "../theme/tokens";
 
 const LABELS = {
-  created: "Created",
+  awaiting_payment: "Payment pending",
+  created: "Requested",
   searching: "Finding expert",
-  assigned: "On the way",
+  assigned: "Expert assigned",
   in_progress: "In progress",
   completed: "Completed",
   cancelled: "Cancelled",

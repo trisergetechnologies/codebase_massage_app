@@ -1,3 +1,4 @@
+import { ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
 export function FloatingCartBar() {
@@ -5,26 +6,27 @@ export function FloatingCartBar() {
 
   if (isEmpty) return null;
 
-  const label =
-    totals.count === 1 ? "1 session selected" : `${totals.count} sessions selected`;
+  const sessions =
+    totals.count === 1 ? "1 session" : `${totals.count} sessions`;
 
   return (
     <div
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-border bg-white/95 px-4 py-3 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] backdrop-blur-md lg:hidden"
-      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      className="fixed inset-x-4 bottom-4 z-50 animate-slide-up rounded-card bg-forest px-4 text-white shadow-xl md:hidden"
+      style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))", height: 60 }}
     >
-      <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-ink">
-            {label} · ₹{totals.price.toLocaleString("en-IN")}
+      <div className="flex h-[60px] items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <ShoppingBag size={20} className="shrink-0" />
+          <p className="truncate type-body font-semibold">
+            {sessions} · ₹{totals.price.toLocaleString("en-IN")}
           </p>
         </div>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="shrink-0 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#0d6b63] active:scale-[0.98]"
+          className="inline-flex shrink-0 items-center gap-1 type-button-sm font-semibold text-white"
         >
-          View cart
+          Book now <ArrowRight size={16} />
         </button>
       </div>
     </div>

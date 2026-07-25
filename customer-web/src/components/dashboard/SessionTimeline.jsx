@@ -1,13 +1,13 @@
 import { Check } from "lucide-react";
 import { getTrackingSteps } from "../../lib/bookingStatus";
-import { ACTIVE_STATUSES } from "../../lib/bookingStatus";
+import { LIVE_TRACKING_STATUSES } from "../../lib/bookingJourney";
 
-export function SessionTimeline({ booking }) {
+export function SessionTimeline({ booking, embedded = false }) {
   const steps = getTrackingSteps(booking);
-  const isLive = ACTIVE_STATUSES.includes(booking?.status);
+  const isLive = LIVE_TRACKING_STATUSES.includes(booking?.status);
 
-  return (
-    <div className="rounded-xl border border-border bg-white p-6">
+  const content = (
+    <>
       <div className="mb-6 flex items-center justify-between">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
           Session progress
@@ -48,13 +48,25 @@ export function SessionTimeline({ booking }) {
               >
                 {step.label}
               </p>
-              {step.state === "current" && (
-                <p className="mt-0.5 text-xs text-accent">In progress</p>
-              )}
+              {step.sublabel && step.state !== "upcoming" ? (
+                <p
+                  className={`mt-0.5 text-xs ${
+                    step.state === "current" ? "text-accent" : "text-muted"
+                  }`}
+                >
+                  {step.state === "current" ? step.sublabel : step.sublabel}
+                </p>
+              ) : null}
             </div>
           </li>
         ))}
       </ol>
-    </div>
+    </>
+  );
+
+  if (embedded) return content;
+
+  return (
+    <div className="rounded-xl border border-border bg-white p-6">{content}</div>
   );
 }

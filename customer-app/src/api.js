@@ -43,10 +43,10 @@ export const api = {
   me: () => request("/api/me"),
   listServices: () => request("/api/services"),
   listCategories: () => request("/api/categories"),
-  createBooking: (serviceIds, location) =>
+  createBooking: (serviceIds, location, paymentTiming = "pay_later") =>
     request("/api/bookings", {
       method: "POST",
-      body: JSON.stringify({ serviceIds, location }),
+      body: JSON.stringify({ serviceIds, location, paymentTiming }),
     }),
   getBooking: (id) => request(`/api/bookings/${id}`),
   listBookings: () => request("/api/bookings"),

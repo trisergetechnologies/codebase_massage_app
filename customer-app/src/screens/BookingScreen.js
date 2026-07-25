@@ -6,30 +6,28 @@ import { Feather } from "@expo/vector-icons";
 import { LeafletView } from "react-native-leaflet-view";
 
 import {
-  Screen, Text, Button, Card, IconButton, StatusBadge, Avatar, Divider, Chip,
+  Screen, Text, Button, Card, IconButton, StatusBadge, Avatar, Divider,
 } from "../ui";
-import { palette, spacing, radii, shadows, layout } from "../theme/tokens";
+import { palette, spacing, radii, shadows } from "../theme/tokens";
 import { api } from "../api";
 import { getSocket } from "../socket";
+import { getJourneyVisibility, getScreenTitle } from "../utils/bookingJourney";
 
 const STAGES = [
-  { key: "searching",   label: "Finding expert",     icon: "search" },
-  { key: "assigned",    label: "On the way",         icon: "navigation" },
-  { key: "in_progress", label: "Service in progress",icon: "activity" },
-  { key: "completed",   label: "Completed",          icon: "check-circle" },
+  { key: "searching", label: "Finding expert", icon: "search" },
+  { key: "assigned", label: "Expert assigned", icon: "navigation" },
+  { key: "in_progress", label: "In progress", icon: "activity" },
+  { key: "completed", label: "Completed", icon: "check-circle" },
 ];
 
 export default function BookingScreen({ route, navigation }) {
   const { bookingId } = route.params;
   const [booking, setBooking] = useState(null);
   const [expertLoc, setExpertLoc] = useState(null);
-  const [logs, setLogs] = useState([]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [addOnable, setAddOnable] = useState([]);
-
-  function pushLog(msg) {
-    setLogs((prev) => [{ at: Date.now(), msg }, ...prev].slice(0, 12));
-  }
+  const [candidateEtaMin, setCandidateEtaMin] = useState(null);
+  const [paying, setPaying] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -44,35 +42,37 @@ export default function BookingScreen({ route, navigation }) {
       socket = await getSocket();
       socket.emit("booking:subscribe", { bookingId });
 
-      socket.on("booking:status", ({ status }) => {
-        pushLog(`status → ${status}`);
+      socket.on("booking:status", () => {
         api.getBooking(bookingId).then((fresh) => mounted && setBooking(fresh));
       });
       socket.on("booking:assigned", (data) => {
-        pushLog(`${data.expert?.name} accepted · ETA ${data.quotedEtaMin} min`);
+        setCandidateEtaMin(null);
         if (data.expert?.location) setExpertLoc(data.expert.location);
         api.getBooking(bookingId).then((fresh) => mounted && setBooking(fresh));
       });
       socket.on("booking:expert_location", ({ lat, lng }) => setExpertLoc({ lat, lng }));
-      socket.on("booking:arrived", () => pushLog("therapist arrived"));
-      socket.on("booking:addon", ({ pricing }) => {
-        pushLog(`add-on added · total ₹${pricing.total}`);
+      socket.on("booking:arrived", () => {
         api.getBooking(bookingId).then((fresh) => mounted && setBooking(fresh));
       });
-      socket.on("booking:failed", ({ reason }) => {
-        pushLog(`failed: ${reason}`);
-        Alert.alert("No therapist found", "We couldn't reach anyone in 15 min. Try again?");
+      socket.on("booking:addon", () => {
+        api.getBooking(bookingId).then((fresh) => mounted && setBooking(fresh));
       });
-      socket.on("booking:searching", ({ candidateEtaMin }) =>
-        pushLog(`offering nearby therapist · ETA ${candidateEtaMin} min`)
-      );
+      socket.on("booking:failed", () => {
+        Alert.alert("No expert found", "We couldn't reach anyone nearby. Please try again.");
+      });
+      socket.on("booking:searching", ({ candidateEtaMin: eta }) => {
+        if (eta != null) setCandidateEtaMin(eta);
+      });
+      socket.on("booking:payment", () => {
+        api.getBooking(bookingId).then((fresh) => mounted && setBooking(fresh));
+      });
     }
 
     init();
     return () => {
       mounted = false;
       if (socket) {
-        ["booking:status","booking:assigned","booking:expert_location","booking:arrived","booking:addon","booking:failed","booking:searching"]
+        ["booking:status", "booking:assigned", "booking:expert_location", "booking:arrived", "booking:addon", "booking:failed", "booking:searching", "booking:payment"]
           .forEach((e) => socket.off(e));
         socket.emit("booking:unsubscribe", { bookingId });
       }
@@ -116,12 +116,13 @@ export default function BookingScreen({ route, navigation }) {
     catch (e) { Alert.alert("Could not add", e.message); }
   }
   async function payNow() {
+    setPaying(true);
     try {
       await api.pay(bookingId);
       const fresh = await api.getBooking(bookingId);
       setBooking(fresh);
-      Alert.alert("Paid", "Payment captured (test mode).");
     } catch (e) { Alert.alert("Payment failed", e.message); }
+    finally { setPaying(false); }
   }
   function cancelBooking() {
     Alert.alert("Cancel booking?", "You won't be charged.", [
@@ -146,14 +147,15 @@ export default function BookingScreen({ route, navigation }) {
     );
   }
 
-  const isActive = ["assigned", "in_progress"].includes(booking.status);
-  const canAddOn = isActive;
+  const visibility = getJourneyVisibility(booking);
+  const canAddOn = booking.status === "in_progress";
+  const eta = booking.liveEtaMin ?? booking.quotedEtaMin ?? candidateEtaMin;
+  const showExpertOnMap = visibility.mapMode === "live";
 
   return (
     <Screen edges={["top"]} scroll>
-      <Header title="Live booking" onBack={() => navigation.replace("Home")} />
+      <Header title={getScreenTitle(booking.status)} onBack={() => navigation.replace("Home")} />
 
-      {/* Status hero */}
       <Card tone="ink" elevation="md" radius={radii.xxl} padding={spacing.xl} style={{ marginTop: spacing.lg }}>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
           <Text variant="caption" style={{ color: palette.textOnInk, opacity: 0.7 }}>
@@ -166,26 +168,40 @@ export default function BookingScreen({ route, navigation }) {
           {headlineFor(booking)}
         </Text>
 
-        {booking.quotedEtaMin != null && booking.status === "assigned" && (
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: spacing.md }}>
-            <Feather name="clock" size={14} color={palette.gold} />
-            <Text variant="bodyMd" style={{ color: palette.gold, marginLeft: 6 }}>
-              ETA {booking.quotedEtaMin} min
-            </Text>
+        <Text variant="bodySm" style={{ color: palette.textOnInk, opacity: 0.75, marginTop: spacing.sm }}>
+          {subcopyFor(booking, candidateEtaMin)}
+        </Text>
+
+        {visibility.showEta && eta != null && (
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: spacing.md, flexWrap: "wrap", gap: 8 }}>
+            <View style={{ flexDirection: "row", alignItems: "center" }}>
+              <Feather name="clock" size={14} color={palette.gold} />
+              <Text variant="bodyMd" style={{ color: palette.gold, marginLeft: 6 }}>
+                ETA {eta} min
+              </Text>
+            </View>
+            {booking.distanceKm != null && booking.status === "assigned" && (
+              <Text variant="bodySm" style={{ color: palette.textOnInk, opacity: 0.7 }}>
+                · {booking.distanceKm} km away
+              </Text>
+            )}
           </View>
         )}
 
-        <View style={{ height: spacing.lg }} />
-        <Timeline status={booking.status} />
+        {visibility.showTimeline ? (
+          <>
+            <View style={{ height: spacing.lg }} />
+            <Timeline status={booking.status} />
+          </>
+        ) : null}
       </Card>
 
-      {/* Expert card */}
-      {booking.expert ? (
+      {visibility.showExpertCard && booking.expert ? (
         <Card elevation="sm" style={{ marginTop: spacing.lg }}>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             <Avatar uri={booking.expert.photoUrl} name={booking.expert.name} size={56} />
             <View style={{ flex: 1, marginLeft: spacing.md }}>
-              <Text variant="caption" color="muted">Your therapist</Text>
+              <Text variant="caption" color="muted">Your expert</Text>
               <Text variant="h3" style={{ marginTop: 2 }}>{booking.expert.name}</Text>
               <View style={{ flexDirection: "row", alignItems: "center", marginTop: 4 }}>
                 <Feather name="star" size={12} color={palette.gold} />
@@ -194,29 +210,32 @@ export default function BookingScreen({ route, navigation }) {
                 </Text>
               </View>
             </View>
-            <IconButton tone="surface" elevated>
-              <Feather name="phone" size={18} color={palette.ink} />
-            </IconButton>
-            <View style={{ width: spacing.sm }} />
-            <IconButton tone="ink">
-              <Feather name="message-circle" size={18} color={palette.textOnInk} />
-            </IconButton>
           </View>
         </Card>
       ) : null}
 
-      {/* Map */}
-      <Card padding={0} elevation="md" radius={radii.xxl} style={{ marginTop: spacing.lg, overflow: "hidden" }}>
-        <View style={{ height: 260, backgroundColor: palette.surfaceSoft }}>
-          <LeafletView
-            mapCenterPosition={mapCenter}
-            zoom={14}
-            mapMarkers={markers}
-          />
-        </View>
-      </Card>
+      {visibility.mapMode !== "hidden" && (
+        <Card padding={0} elevation="md" radius={radii.xxl} style={{ marginTop: spacing.lg, overflow: "hidden" }}>
+          <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm }}>
+            <Text variant="caption" color="muted">
+              {visibility.mapMode === "address" ? "Service address" : "Live map"}
+            </Text>
+            {visibility.mapMode === "address" ? (
+              <Text variant="bodySm" color="secondary" style={{ marginTop: 4 }}>
+                Expert will appear here once assigned
+              </Text>
+            ) : null}
+          </View>
+          <View style={{ height: 260, backgroundColor: palette.surfaceSoft }}>
+            <LeafletView
+              mapCenterPosition={mapCenter}
+              zoom={14}
+              mapMarkers={showExpertOnMap ? markers : markers.filter((m) => m.id === "pickup")}
+            />
+          </View>
+        </Card>
+      )}
 
-      {/* Items */}
       <Text variant="h3" style={{ marginTop: spacing.xxl }}>Booking summary</Text>
       <View style={{ height: spacing.sm }} />
       <Card padding={0} elevation="sm">
@@ -251,31 +270,34 @@ export default function BookingScreen({ route, navigation }) {
         </View>
       </Card>
 
-      {/* Actions */}
       <View style={{ height: spacing.lg }} />
-      {canAddOn && (
+      {visibility.needsPayment && (
         <Button
-          title="Add another massage"
-          variant="subtle"
+          title={
+            booking.status === "awaiting_payment"
+              ? `Pay ₹${booking.pricing.total} to confirm`
+              : `Pay ₹${booking.pricing.total}`
+          }
+          variant="primary"
           fullWidth
-          onPress={openAddOnPicker}
-          leftIcon={<Feather name="plus" size={18} color={palette.ink} />}
+          loading={paying}
+          onPress={payNow}
         />
       )}
-
-      {booking.status === "completed" && booking.payment?.status !== "paid" && (
+      {canAddOn && (
         <>
           <View style={{ height: spacing.md }} />
           <Button
-            title={`Pay ₹${booking.pricing.total} (test)`}
-            variant="primary"
+            title="Add another massage"
+            variant="subtle"
             fullWidth
-            onPress={payNow}
+            onPress={openAddOnPicker}
+            leftIcon={<Feather name="plus" size={18} color={palette.ink} />}
           />
         </>
       )}
 
-      {!["completed", "cancelled"].includes(booking.status) && (
+      {visibility.showCancel && (
         <>
           <View style={{ height: spacing.md }} />
           <Button
@@ -287,25 +309,6 @@ export default function BookingScreen({ route, navigation }) {
         </>
       )}
 
-      {/* Activity log */}
-      <Text variant="h3" style={{ marginTop: spacing.xxxl }}>Activity</Text>
-      <View style={{ height: spacing.sm }} />
-      <Card elevation="sm">
-        {logs.length === 0 ? (
-          <Text variant="bodySm" color="muted">Waiting for events…</Text>
-        ) : (
-          logs.map((l, i) => (
-            <View key={i} style={{ flexDirection: "row", paddingVertical: 4 }}>
-              <Text variant="bodySm" color="muted" style={{ width: 64 }}>
-                {new Date(l.at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </Text>
-              <Text variant="bodySm" style={{ flex: 1 }}>{l.msg}</Text>
-            </View>
-          ))
-        )}
-      </Card>
-
-      {/* Add-on picker modal */}
       <Modal visible={pickerOpen} transparent animationType="slide" onRequestClose={() => setPickerOpen(false)}>
         <View style={{ flex: 1, backgroundColor: palette.overlay, justifyContent: "flex-end" }}>
           <View
@@ -348,16 +351,6 @@ export default function BookingScreen({ route, navigation }) {
                     <Text variant="bodySm" color="secondary" style={{ marginTop: 2 }}>{s.durationMin} min</Text>
                   </View>
                   <Text variant="price">₹{s.price}</Text>
-                  <View style={{ width: spacing.md }} />
-                  <View
-                    style={{
-                      width: 32, height: 32, borderRadius: 16,
-                      backgroundColor: palette.ink,
-                      alignItems: "center", justifyContent: "center",
-                    }}
-                  >
-                    <Feather name="plus" size={16} color={palette.textOnInk} />
-                  </View>
                 </Pressable>
               ))}
             </ScrollView>
@@ -369,8 +362,6 @@ export default function BookingScreen({ route, navigation }) {
     </Screen>
   );
 }
-
-/* ---------- pieces ---------- */
 
 function Header({ title, onBack }) {
   return (
@@ -388,25 +379,53 @@ function Header({ title, onBack }) {
 
 function headlineFor(b) {
   switch (b.status) {
-    case "created":     return "Hold tight…";
-    case "searching":   return "Finding the\nclosest therapist";
-    case "assigned":    return "Therapist is\non the way";
+    case "awaiting_payment": return "Complete\npayment to confirm";
+    case "created": return "Booking\nrequested";
+    case "searching": return "Finding an\nexpert for you";
+    case "assigned": return "Expert\nassigned";
     case "in_progress": return "Enjoy your\nsession";
-    case "completed":   return "All done.\nThanks for booking.";
-    case "cancelled":   return "Booking\ncancelled";
-    default:            return b.status;
+    case "completed": return "All done.\nThanks for booking.";
+    case "cancelled": return "Booking\ncancelled";
+    default: return b.status;
+  }
+}
+
+function subcopyFor(b, candidateEtaMin) {
+  switch (b.status) {
+    case "awaiting_payment":
+      return "Your booking is saved. Pay now to start finding a verified expert.";
+    case "created":
+      return "We're preparing your request.";
+    case "searching":
+      return candidateEtaMin != null
+        ? `Searching nearby experts… ~${candidateEtaMin} min away`
+        : "Searching nearby verified experts…";
+    case "assigned":
+      return b.expert?.name ? `${b.expert.name} is on the way.` : "Your expert is on the way.";
+    case "in_progress":
+      return b.payment?.timing === "pay_later" && b.payment?.status !== "paid"
+        ? "Pay before your session ends."
+        : "Your expert has arrived. Enjoy your session.";
+    case "completed":
+      return "Thank you for booking with us.";
+    case "cancelled":
+      return b.cancelReason ? "This booking was cancelled." : "";
+    default:
+      return "";
   }
 }
 
 function Timeline({ status }) {
   const order = ["searching", "assigned", "in_progress", "completed"];
-  const idx = order.indexOf(status === "created" ? "searching" : status);
+  let idx = order.indexOf(status);
+  if (status === "created") idx = -1;
+  if (status === "completed") idx = order.length - 1;
+
   return (
     <View style={{ flexDirection: "row", alignItems: "center" }}>
       {STAGES.map((s, i) => {
         const done = i <= idx;
         const active = i === idx && status !== "completed";
-        // active = gold-haloed circle so it pops against ink. done = peach.
         const bg = active ? palette.gold : done ? palette.peach : "rgba(255,255,255,0.12)";
         const iconColor = active || done ? palette.ink : palette.textOnInk;
         return (

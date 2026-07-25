@@ -1,6 +1,13 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { View, ScrollView, StyleSheet, Alert, Linking } from "react-native";
+import React, { useEffect, useMemo, useState } from "react";
+import {
+  View,
+  ScrollView,
+  StyleSheet,
+  Alert,
+  Linking,
+} from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { LeafletView } from "react-native-leaflet-view";
 import { bookingService } from "../services/bookingService";
 import { getSocket } from "../socket";
 import { useExpertSession } from "../context/ExpertSessionContext";
@@ -25,6 +32,13 @@ const STEPS = [
   { key: "complete", label: "Complete" },
 ];
 
+function expertEarning(booking) {
+  return (
+    booking?.expertEarning ||
+    Math.round((booking?.pricing?.subtotal || 0) * 0.7)
+  );
+}
+
 export default function ActiveOrderScreen({ route, navigation }) {
   const { bookingId } = route.params;
   const { refreshMe } = useExpertSession();
@@ -32,11 +46,14 @@ export default function ActiveOrderScreen({ route, navigation }) {
   const [busy, setBusy] = useState(false);
   const [otp, setOtp] = useState("");
   const [elapsed, setElapsed] = useState(0);
+  const [startOtpMode, setStartOtpMode] = useState(false);
   const [endOtpMode, setEndOtpMode] = useState(false);
+  const [sessionComplete, setSessionComplete] = useState(false);
 
   async function load() {
     const b = await bookingService.get(bookingId);
     setBooking(b);
+    if (b.status === "completed") setSessionComplete(true);
   }
 
   useEffect(() => {
@@ -49,19 +66,28 @@ export default function ActiveOrderScreen({ route, navigation }) {
       const reload = () => mounted && load();
       socket.on("booking:status", reload);
       socket.on("booking:arrived", reload);
+      socket.on("booking:addon", reload);
     })();
     return () => {
       mounted = false;
       if (socket) {
         socket.off("booking:status");
         socket.off("booking:arrived");
+        socket.off("booking:addon");
         socket.emit("booking:unsubscribe", { bookingId });
       }
     };
   }, [bookingId]);
 
   const baseStep = getActiveOrderStep(booking);
-  const step = baseStep === "session" && endOtpMode ? "end_otp" : baseStep;
+  const step = useMemo(() => {
+    if (sessionComplete || booking?.status === "completed") return "complete";
+    if (baseStep === "arrived" && startOtpMode) return "start_otp";
+    if (baseStep === "session" && endOtpMode) return "end_otp";
+    return baseStep;
+  }, [baseStep, startOtpMode, endOtpMode, sessionComplete, booking?.status]);
+
+  const bookedMin = totalDurationMin(booking?.items || []);
 
   useEffect(() => {
     if (step !== "session" || !booking?.timeline?.startedAt) return undefined;
@@ -78,10 +104,29 @@ export default function ActiveOrderScreen({ route, navigation }) {
     return `${m}:${String(s).padStart(2, "0")}`;
   }, [elapsed]);
 
+  const mapCenter = useMemo(() => {
+    if (!booking?.location) return { lat: 12.9716, lng: 77.5946 };
+    return { lat: booking.location.lat, lng: booking.location.lng };
+  }, [booking]);
+
+  const markers = useMemo(() => {
+    if (!booking?.location) return [];
+    return [
+      {
+        id: "customer",
+        position: { lat: booking.location.lat, lng: booking.location.lng },
+        icon: "📍",
+        size: [36, 36],
+      },
+    ];
+  }, [booking]);
+
   function openMaps() {
     if (!booking?.location) return;
     const { lat, lng } = booking.location;
-    Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`);
+    Linking.openURL(
+      `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`
+    ).catch(() => Alert.alert("Could not open maps"));
   }
 
   async function runAction() {
@@ -89,14 +134,18 @@ export default function ActiveOrderScreen({ route, navigation }) {
     try {
       if (step === "navigating") {
         await bookingService.arrived(bookingId);
+        setStartOtpMode(false);
       } else if (step === "start_otp") {
         await bookingService.start(bookingId, otp);
         setOtp("");
+        setStartOtpMode(false);
       } else if (step === "end_otp") {
         await bookingService.complete(bookingId, otp);
         setOtp("");
+        setEndOtpMode(false);
         await refreshMe();
-        navigation.goBack();
+        await load();
+        setSessionComplete(true);
         return;
       }
       await load();
@@ -111,6 +160,8 @@ export default function ActiveOrderScreen({ route, navigation }) {
   if (!booking) return <LoadingView message="Loading order…" />;
 
   const stepIndex = STEPS.findIndex((s) => s.key === step);
+  const etaMin = booking.liveEtaMin ?? booking.quotedEtaMin;
+  const distanceKm = booking.distanceKm;
 
   return (
     <ScrollView style={styles.safe} contentContainerStyle={styles.scroll}>
@@ -126,11 +177,34 @@ export default function ActiveOrderScreen({ route, navigation }) {
       <AppText variant="label">Active order</AppText>
       <AppText variant="h1">{booking.customer?.name || "Customer"}</AppText>
       <AppText variant="body" color="secondary">
-        {serviceSummary(booking.items)} · {totalDurationMin(booking.items)} min
+        {serviceSummary(booking.items)} · {bookedMin} min booked
       </AppText>
-      <AppText variant="h3" style={{ marginTop: spacing.sm }}>
-        {formatRupee(booking.pricing?.total)}
-      </AppText>
+
+      {step === "navigating" && (etaMin != null || distanceKm != null) && (
+        <View style={styles.metaRow}>
+          {etaMin != null && (
+            <AppText variant="body" color="secondary">
+              ETA ~{Math.round(etaMin)} min
+            </AppText>
+          )}
+          {distanceKm != null && (
+            <AppText variant="body" color="secondary">
+              {distanceKm} km away
+            </AppText>
+          )}
+        </View>
+      )}
+
+      {step === "navigating" && booking.location && (
+        <View style={styles.mapCard}>
+          <LeafletView
+            mapCenterPosition={mapCenter}
+            zoom={15}
+            mapMarkers={markers}
+            doDebug={false}
+          />
+        </View>
+      )}
 
       <View style={styles.address}>
         <Feather name="map-pin" size={18} color={colors.textSecondary} />
@@ -142,21 +216,52 @@ export default function ActiveOrderScreen({ route, navigation }) {
 
       {step === "navigating" && (
         <>
-          <PrimaryButton title="Go to location" variant="outline" onPress={openMaps} />
-          <PrimaryButton title="I've arrived" onPress={runAction} loading={busy} style={{ marginTop: spacing.md }} />
+          <PrimaryButton
+            title="Go to location"
+            variant="outline"
+            onPress={openMaps}
+          />
+          <PrimaryButton
+            title="I've arrived"
+            onPress={runAction}
+            loading={busy}
+            style={{ marginTop: spacing.md }}
+          />
         </>
+      )}
+
+      {step === "arrived" && (
+        <View style={styles.arrivedBox}>
+          <Feather name="check-circle" size={40} color={colors.primary} />
+          <AppText variant="h2" style={{ marginTop: spacing.md }}>
+            You've arrived
+          </AppText>
+          <AppText variant="body" color="secondary" style={{ marginTop: spacing.sm, textAlign: "center" }}>
+            Ask the customer for their start OTP when you're ready to begin the session.
+          </AppText>
+          <PrimaryButton
+            title="Enter start OTP"
+            onPress={() => setStartOtpMode(true)}
+            style={{ marginTop: spacing.lg, alignSelf: "stretch" }}
+          />
+        </View>
       )}
 
       {step === "start_otp" && (
         <View style={styles.otpBlock}>
           <AppText variant="body">Enter start OTP from customer</AppText>
-          {booking.sessionOtp?.startCode ? (
+          {__DEV__ && booking.sessionOtp?.startCode ? (
             <AppText variant="caption" color="muted" style={{ marginTop: spacing.xs }}>
               Dev hint: {booking.sessionOtp.startCode}
             </AppText>
           ) : null}
           <OTPInput value={otp} onChangeText={setOtp} />
-          <PrimaryButton title="Verify & start session" onPress={runAction} loading={busy} style={{ marginTop: spacing.lg }} />
+          <PrimaryButton
+            title="Verify & start session"
+            onPress={runAction}
+            loading={busy}
+            style={{ marginTop: spacing.lg }}
+          />
         </View>
       )}
 
@@ -166,20 +271,58 @@ export default function ActiveOrderScreen({ route, navigation }) {
           <AppText variant="h1" style={styles.timer}>
             {timerDisplay}
           </AppText>
-          <PrimaryButton title="End session — enter OTP" onPress={() => setEndOtpMode(true)} style={{ marginTop: spacing.lg }} />
+          <AppText variant="caption" color="muted">
+            Booked duration: {bookedMin} min
+          </AppText>
+          {(booking.items || []).some((i) => i.isAddOn) && (
+            <AppText variant="caption" color="secondary" style={{ marginTop: spacing.sm }}>
+              Customer add-ons are included in this session.
+            </AppText>
+          )}
+          <PrimaryButton
+            title="End session — enter OTP"
+            onPress={() => setEndOtpMode(true)}
+            style={{ marginTop: spacing.lg }}
+          />
         </View>
       )}
 
       {step === "end_otp" && (
         <View style={styles.otpBlock}>
           <AppText variant="body">Enter end OTP from customer</AppText>
-          {booking.sessionOtp?.endCode ? (
+          {__DEV__ && booking.sessionOtp?.endCode ? (
             <AppText variant="caption" color="muted" style={{ marginTop: spacing.xs }}>
               Dev hint: {booking.sessionOtp.endCode}
             </AppText>
           ) : null}
           <OTPInput value={otp} onChangeText={setOtp} />
-          <PrimaryButton title="Verify & complete order" onPress={runAction} loading={busy} style={{ marginTop: spacing.lg }} />
+          <PrimaryButton
+            title="Verify & complete order"
+            onPress={runAction}
+            loading={busy}
+            style={{ marginTop: spacing.lg }}
+          />
+        </View>
+      )}
+
+      {step === "complete" && (
+        <View style={styles.completeBox}>
+          <Feather name="award" size={44} color={colors.primary} />
+          <AppText variant="h2" style={{ marginTop: spacing.md }}>
+            Session complete
+          </AppText>
+          <AppText variant="body" color="secondary" style={{ marginTop: spacing.xs }}>
+            Great work — earnings have been recorded.
+          </AppText>
+          <View style={styles.earnCard}>
+            <AppText variant="label">You earned</AppText>
+            <AppText variant="h1">{formatRupee(expertEarning(booking))}</AppText>
+          </View>
+          <PrimaryButton
+            title="Back to receiving orders"
+            onPress={() => navigation.goBack()}
+            style={{ marginTop: spacing.lg, alignSelf: "stretch" }}
+          />
         </View>
       )}
     </ScrollView>
@@ -192,12 +335,34 @@ const styles = StyleSheet.create({
   stepper: { flexDirection: "row", gap: 6, marginBottom: spacing.lg },
   stepDot: { flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.border },
   stepDotDone: { backgroundColor: colors.primary },
+  metaRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginTop: spacing.sm,
+  },
+  mapCard: {
+    height: 200,
+    marginTop: spacing.md,
+    borderRadius: radii.lg,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
   address: {
     flexDirection: "row",
     marginVertical: spacing.lg,
     padding: spacing.md,
     backgroundColor: colors.surface,
     borderRadius: radii.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  arrivedBox: {
+    marginTop: spacing.lg,
+    padding: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    alignItems: "center",
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -212,4 +377,21 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   timer: { fontSize: 48, marginVertical: spacing.lg },
+  completeBox: {
+    marginTop: spacing.lg,
+    padding: spacing.xl,
+    backgroundColor: colors.surface,
+    borderRadius: radii.lg,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  earnCard: {
+    marginTop: spacing.lg,
+    padding: spacing.lg,
+    backgroundColor: colors.surfaceAlt,
+    borderRadius: radii.md,
+    alignItems: "center",
+    alignSelf: "stretch",
+  },
 });

@@ -53,8 +53,10 @@ export function IncomingOrderModal() {
         </View>
 
         <View style={styles.totalRow}>
-          <AppText variant="h3">Payout</AppText>
-          <AppText variant="h2">{formatRupee(offer.total)}</AppText>
+          <AppText variant="h3">You'll earn</AppText>
+          <AppText variant="h2">
+            {formatRupee(offer.estimatedEarning ?? offer.total)}
+          </AppText>
         </View>
 
         <View style={styles.actions}>

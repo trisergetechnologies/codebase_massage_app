@@ -8,6 +8,7 @@ import { AppText } from "../components/ui/AppText";
 import { OrderCard } from "../components/orders/OrderCard";
 import { LoadingView } from "../components/feedback/LoadingView";
 import { EmptyState } from "../components/feedback/EmptyState";
+import { navigateToOrder } from "../utils/order";
 
 export default function OrdersScreen({ navigation }) {
   const [tab, setTab] = useState("today");
@@ -81,7 +82,7 @@ export default function OrdersScreen({ navigation }) {
             <OrderCard
               key={o.id}
               order={o}
-              onPress={() => navigation.navigate("ActiveOrder", { bookingId: o.id })}
+              onPress={() => navigateToOrder(navigation, o)}
             />
           ))}
         </ScrollView>

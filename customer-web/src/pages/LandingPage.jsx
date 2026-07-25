@@ -1,16 +1,11 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { HeroSection } from "../components/landing/HeroSection";
-import { PainPointsSection } from "../components/landing/PainPointsSection";
-import { TrustBar } from "../components/landing/TrustBar";
-import { HowItWorksSection } from "../components/landing/HowItWorksSection";
-import { ServicesSection } from "../components/landing/ServicesSection";
-import { WhySection } from "../components/landing/WhySection";
-import { SafetySection } from "../components/landing/SafetySection";
-import { ExpertsSection } from "../components/landing/ExpertsSection";
-import { TestimonialsSection } from "../components/landing/TestimonialsSection";
-import { FinalCtaSection } from "../components/landing/FinalCtaSection";
-import { FaqSection } from "../components/landing/FaqSection";
+import { LandingHero } from "../components/landing/LandingHero";
+import { LandingServices } from "../components/landing/LandingServices";
+import { LandingProof } from "../components/landing/LandingProof";
+import { LandingProcess } from "../components/landing/LandingProcess";
+import { LandingFaq } from "../components/landing/LandingFaq";
+import { LandingFinalCta } from "../components/landing/LandingFinalCta";
 import { LandingStickyCta } from "../components/landing/LandingStickyCta";
 
 export function LandingPage() {
@@ -20,19 +15,18 @@ export function LandingPage() {
     return <Navigate to="/services" replace />;
   }
 
+  if (loading) {
+    return <div className="min-h-screen bg-white" aria-busy="true" />;
+  }
+
   return (
     <div className="pb-20 md:pb-0">
-      <HeroSection />
-      <PainPointsSection />
-      <TrustBar />
-      <ServicesSection />
-      <HowItWorksSection />
-      <WhySection />
-      <SafetySection />
-      <TestimonialsSection />
-      <ExpertsSection />
-      <FaqSection />
-      <FinalCtaSection />
+      <LandingHero />
+      <LandingServices />
+      <LandingProof />
+      <LandingProcess />
+      <LandingFaq />
+      <LandingFinalCta />
       <LandingStickyCta />
     </div>
   );

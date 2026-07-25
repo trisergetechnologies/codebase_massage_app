@@ -21,6 +21,7 @@ import { IncomingOrderModal } from "./src/components/orders/IncomingOrderModal";
 import LoginScreen from "./src/screens/LoginScreen";
 import MainTabs from "./src/navigation/MainTabs";
 import ActiveOrderScreen from "./src/screens/ActiveOrderScreen";
+import OrderDetailScreen from "./src/screens/OrderDetailScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -29,11 +30,11 @@ const navTheme = {
   dark: false,
   colors: {
     ...DefaultTheme.colors,
-    background: colors.bg,
-    card: colors.surface,
-    text: colors.text,
+    background: colors.surface0,
+    card: colors.surface1,
+    text: colors.text1,
     border: colors.border,
-    primary: colors.primary,
+    primary: colors.online,
   },
 };
 
@@ -76,7 +77,7 @@ export default function App() {
       <SafeAreaProvider>
         <NavigationContainer ref={navRef} theme={navTheme}>
           <ExpertSessionProvider key={sessionKey} navigationRef={navRef} sessionKey={sessionKey}>
-            <StatusBar style="dark" />
+            <StatusBar style="light" />
             <Stack.Navigator
               initialRouteName={authed ? "MainTabs" : "Login"}
               screenOptions={{
@@ -96,6 +97,11 @@ export default function App() {
                 name="ActiveOrder"
                 component={ActiveOrderScreen}
                 options={{ title: "Active order", presentation: "card" }}
+              />
+              <Stack.Screen
+                name="OrderDetail"
+                component={OrderDetailScreen}
+                options={{ title: "Order details", presentation: "card" }}
               />
             </Stack.Navigator>
             <IncomingOrderModal />

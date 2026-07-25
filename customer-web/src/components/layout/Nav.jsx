@@ -53,6 +53,7 @@ export function Nav() {
   const links = pageLinks(isAuthenticated);
   const homeTo = isAuthenticated ? "/services" : "/";
   const onLanding = location.pathname === "/" && !isAuthenticated;
+  const lightLanding = onLanding;
 
   useEffect(() => {
     if (!onLanding) {
@@ -60,7 +61,7 @@ export function Nav() {
       return;
     }
     function onScroll() {
-      setHeroNav(window.scrollY < 120);
+      setHeroNav(window.scrollY < 80);
     }
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
@@ -89,74 +90,53 @@ export function Nav() {
   return (
     <>
       <header
-        className={`sticky top-0 z-50 transition-colors duration-300 ${
-          onLanding && heroNav
-            ? "border-b border-transparent bg-transparent text-white"
-            : "border-b border-border/80 bg-white/95 text-ink backdrop-blur-md"
+        className={`fixed top-0 z-50 w-full transition-colors duration-default ease-out ${
+          lightLanding && heroNav
+            ? "border-b border-transparent bg-transparent text-ink"
+            : "border-b border-border bg-surface/95 text-ink shadow-sm backdrop-blur-md"
         }`}
       >
-        <div className="mx-auto flex h-16 min-h-[4rem] max-w-[1200px] items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 md:h-[4.75rem] md:px-8">
+        <div className="mx-auto flex h-14 min-h-[56px] max-w-content items-center justify-between gap-2 px-5 sm:px-6 md:px-8">
           <Link
             to={homeTo}
-            className={`flex min-w-0 items-center gap-2 no-underline sm:gap-3 ${
-              onLanding && heroNav ? "text-white" : "text-ink"
-            }`}
+            className="flex min-w-0 items-center gap-2 no-underline text-ink sm:gap-3"
             onClick={closeMenu}
           >
-            <span
-              className={`grid size-9 shrink-0 place-items-center rounded-xl text-xs font-bold sm:size-10 sm:text-sm ${
-                onLanding && heroNav ? "bg-white text-forest" : "bg-accent text-white"
-              }`}
-            >
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-xs font-bold text-white sm:size-10 sm:text-sm">
               R
             </span>
-            <span className="hidden truncate font-display text-[15px] font-bold sm:inline">
-              Relief, Delivered
+            <span className="hidden truncate text-sm font-semibold sm:inline">
+              R · Relief, Delivered
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 lg:gap-8 md:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
             {links.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
-                className={`text-[15px] font-medium transition ${
-                  onLanding && heroNav
-                    ? "text-white/80 hover:text-white"
-                    : "text-sub hover:text-ink"
-                }`}
+                className="type-body font-medium text-sub transition hover:text-ink"
               >
                 {l.label}
               </Link>
             ))}
-            {/* {!isAuthenticated && (
-              <button
-                type="button"
-                onClick={() => openLogin()}
-                className="text-[15px] font-medium text-sub transition hover:text-accent"
-              >
-                Login
-              </button>
-            )} */}
+            <Link
+              to="/services"
+              className="inline-flex h-10 min-h-[40px] items-center justify-center rounded-btn bg-accent px-5 text-sm font-semibold text-white shadow-sm transition-default hover:bg-[var(--color-primary-hover)]"
+            >
+              Book now
+            </Link>
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
-            <CartButton
-              onClick={() => setCartOpen(true)}
-              count={totals.count}
-              inverted={onLanding && heroNav}
-            />
+            <CartButton onClick={() => setCartOpen(true)} count={totals.count} />
             {isAuthenticated ? (
               <UserMenu />
             ) : (
               <button
                 type="button"
                 onClick={() => openLogin()}
-                className={`grid size-11 place-items-center rounded-full border shadow-sm ${
-                  onLanding && heroNav
-                    ? "border-white/20 bg-white/10 text-white hover:bg-white/15"
-                    : "border-border/80 bg-white/80 text-sub hover:text-accent"
-                }`}
+                className="grid size-11 place-items-center rounded-full border border-border bg-surface text-sub shadow-sm hover:text-brand"
                 aria-label="Sign in"
               >
                 <LogIn size={20} strokeWidth={1.75} />
@@ -165,18 +145,10 @@ export function Nav() {
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5 md:hidden">
-            <CartButton
-              onClick={() => setCartOpen(true)}
-              count={totals.count}
-              inverted={onLanding && heroNav}
-            />
+            <CartButton onClick={() => setCartOpen(true)} count={totals.count} />
             <button
               type="button"
-              className={`grid size-10 place-items-center rounded-full border shadow-sm ${
-                onLanding && heroNav
-                  ? "border-white/20 bg-white/10 text-white"
-                  : "border-border/80 bg-white/80 text-ink"
-              }`}
+              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-ink shadow-sm"
               onClick={() => setMenuOpen(true)}
               aria-expanded={menuOpen}
               aria-label="Open menu"

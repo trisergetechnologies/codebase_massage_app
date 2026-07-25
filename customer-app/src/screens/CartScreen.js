@@ -12,24 +12,30 @@ import { api } from "../api";
 export default function CartScreen({ navigation }) {
   const cart = useCart();
   const [loc, setLoc] = useState(null);
+  const [locLoading, setLocLoading] = useState(true);
   const [permErr, setPermErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [discount, setDiscount] = useState("");
+  const [paymentTiming, setPaymentTiming] = useState("pay_later");
 
   useEffect(() => {
     (async () => {
+      setLocLoading(true);
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          setPermErr("Location permission denied — using a default address.");
-          setLoc({ coords: { latitude: 12.9716, longitude: 77.6411 } });
+          setPermErr("Location permission is required to book. Enable it in settings.");
+          setLoc(null);
           return;
         }
         const here = await Location.getCurrentPositionAsync({});
         setLoc(here);
+        setPermErr("");
       } catch (e) {
-        setPermErr(e.message);
-        setLoc({ coords: { latitude: 12.9716, longitude: 77.6411 } });
+        setPermErr(e.message || "Could not get your location.");
+        setLoc(null);
+      } finally {
+        setLocLoading(false);
       }
     })();
   }, []);
@@ -38,7 +44,10 @@ export default function CartScreen({ navigation }) {
   const grand = cart.total + tax;
 
   async function book() {
-    if (!loc) return;
+    if (!loc) {
+      Alert.alert("Location required", permErr || "Waiting for your location.");
+      return;
+    }
     setBusy(true);
     try {
       // Expand cart by quantity for backend (one line item per body)
@@ -47,7 +56,7 @@ export default function CartScreen({ navigation }) {
         lat: loc.coords.latitude,
         lng: loc.coords.longitude,
         address: "Current location",
-      });
+      }, paymentTiming);
       cart.clear();
       navigation.replace("Booking", { bookingId: booking.id });
     } catch (e) {
@@ -164,6 +173,41 @@ export default function CartScreen({ navigation }) {
             <Row label="Total" value={`₹${grand}`} bold />
 
             <View style={{ height: spacing.lg }} />
+            <Text variant="bodyMdMd">When would you like to pay?</Text>
+            <View style={{ height: spacing.sm }} />
+            <Pressable
+              onPress={() => setPaymentTiming("pay_now")}
+              style={{
+                borderRadius: radii.lg,
+                borderWidth: 1.5,
+                borderColor: paymentTiming === "pay_now" ? palette.ink : palette.hairline,
+                backgroundColor: paymentTiming === "pay_now" ? palette.surfaceSoft : palette.bg,
+                padding: spacing.md,
+                marginBottom: spacing.sm,
+              }}
+            >
+              <Text variant="bodyMdMd">Pay now</Text>
+              <Text variant="bodySm" color="secondary" style={{ marginTop: 4 }}>
+                Pay to confirm and find your expert
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setPaymentTiming("pay_later")}
+              style={{
+                borderRadius: radii.lg,
+                borderWidth: 1.5,
+                borderColor: paymentTiming === "pay_later" ? palette.ink : palette.hairline,
+                backgroundColor: paymentTiming === "pay_later" ? palette.surfaceSoft : palette.bg,
+                padding: spacing.md,
+              }}
+            >
+              <Text variant="bodyMdMd">Pay later</Text>
+              <Text variant="bodySm" color="secondary" style={{ marginTop: 4 }}>
+                Find expert first, pay anytime before session ends
+              </Text>
+            </Pressable>
+
+            <View style={{ height: spacing.lg }} />
             <View
               style={{
                 flexDirection: "row",
@@ -181,10 +225,10 @@ export default function CartScreen({ navigation }) {
 
             <View style={{ height: spacing.xl }} />
             <Button
-              title="Checkout"
+              title={paymentTiming === "pay_now" ? "Continue to payment" : "Confirm & find expert"}
               onPress={book}
               loading={busy}
-              disabled={cart.items.length === 0}
+              disabled={cart.items.length === 0 || locLoading || !loc}
               fullWidth
               rightIcon={<Feather name="arrow-right" size={16} color={palette.textOnInk} />}
             />

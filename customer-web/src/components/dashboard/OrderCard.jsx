@@ -1,33 +1,67 @@
 import { Link } from "react-router-dom";
-import { ChevronRight } from "lucide-react";
-import { formatStatus } from "../../lib/bookingStatus";
-import {
-  sessionTitle,
-  formatSessionDate,
-  formatCurrency,
-} from "../../lib/dashboardStats";
 
-export function OrderCard({ booking, className = "" }) {
+import { formatStatusChip } from "../../lib/bookingStatus";
+
+import { LIVE_TRACKING_STATUSES } from "../../lib/bookingJourney";
+
+import { sessionTitle, formatSessionDate, formatCurrency } from "../../lib/dashboardStats";
+
+import { Chip } from "../ui/Chip";
+
+
+
+export function OrderCard({ booking, className = "", active = false }) {
+
   const title = sessionTitle(booking);
-  const statusLabel = formatStatus(booking.status);
+
+  const statusChip = formatStatusChip(booking.status, booking);
+
+  const isLive = LIVE_TRACKING_STATUSES.includes(booking.status);
+
+
 
   return (
+
     <Link
+
       to={`/app/orders/${booking.id}`}
-      className={`flex items-center gap-4 rounded-2xl border border-border bg-white p-4 shadow-sm transition hover:border-accent/30 active:scale-[0.99] lg:p-5 lg:hover:shadow-md ${className}`}
+
+      className={`block min-h-[76px] rounded-card-sm p-4 transition-default active:scale-[0.99] ${
+
+        active || isLive
+
+          ? "border border-forest-200 bg-forest-50 shadow-xs"
+
+          : "border border-border bg-surface shadow-xs hover:border-border-brand"
+
+      } ${className}`}
+
     >
-      <div className="grid size-12 shrink-0 place-items-center rounded-xl bg-accent-soft text-accent">
-        <span className="text-lg font-semibold">{title.charAt(0)}</span>
+
+      <div className="flex items-start justify-between gap-3">
+
+        <p className="type-body font-semibold text-ink">{title}</p>
+
+        {isLive ? <Chip variant="live" pulse>Live</Chip> : null}
+
       </div>
-      <div className="min-w-0 flex-1">
-        <p className="font-semibold text-ink">{title}</p>
-        <p className="mt-0.5 text-sm text-sub">{formatSessionDate(booking.createdAt)}</p>
-        <p className="mt-1 text-sm font-medium text-accent">{statusLabel}</p>
+
+      <div className="mt-2 flex items-center justify-between gap-3">
+
+        <p className="type-caption text-muted">
+
+          {formatSessionDate(booking.createdAt)} · {formatCurrency(booking.pricing?.total)}
+
+        </p>
+
+        <Chip variant={isLive ? "brand" : "muted"}>{statusChip}</Chip>
+
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-1">
-        <span className="text-sm font-semibold text-ink">{formatCurrency(booking.pricing?.total)}</span>
-        <ChevronRight size={18} className="text-muted" />
-      </div>
+
     </Link>
+
   );
+
 }
+
+
