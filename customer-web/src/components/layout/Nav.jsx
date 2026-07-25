@@ -18,7 +18,7 @@ function pageLinks(isAuthenticated) {
     { to: "/", label: "Home" },
     { to: "/services", label: "Services" },
     { to: "/cities", label: "Cities" },
-    { to: "/How-it-works?", label: "How it works?" },
+    { to: "/how-it-works", label: "How it works" },
     { to: "/about-us", label: "About Us" },
     { to: "/support", label: "Support" },
     { to: "/careers", label: "Career" },

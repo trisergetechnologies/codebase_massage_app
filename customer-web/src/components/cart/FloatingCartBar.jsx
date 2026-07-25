@@ -17,7 +17,7 @@ export function FloatingCartBar() {
       <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink">
-            {label}
+            {sessions}
           </p>
           <p className="text-xs text-muted">Tap to review & book</p>
         </div>

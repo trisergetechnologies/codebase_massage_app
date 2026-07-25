@@ -1,11 +1,13 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { LandingHero } from "../components/landing/LandingHero";
-import { LandingServices } from "../components/landing/LandingServices";
-import { LandingProof } from "../components/landing/LandingProof";
-import { LandingProcess } from "../components/landing/LandingProcess";
-import { LandingFaq } from "../components/landing/LandingFaq";
-import { LandingFinalCta } from "../components/landing/LandingFinalCta";
+import { HeroSection } from "../components/landing/HeroSection";
+import { PainPointsSection } from "../components/landing/PainPointsSection";
+import { ServicesSection } from "../components/landing/ServicesSection";
+import { HowItWorksSection } from "../components/landing/HowItWorksSection";
+import { SafetySection } from "../components/landing/SafetySection";
+import { ExpertsSection } from "../components/landing/ExpertsSection";
+import { FaqSection } from "../components/landing/FaqSection";
+import { FinalCtaSection } from "../components/landing/FinalCtaSection";
 import { LandingStickyCta } from "../components/landing/LandingStickyCta";
 
 export function LandingPage() {

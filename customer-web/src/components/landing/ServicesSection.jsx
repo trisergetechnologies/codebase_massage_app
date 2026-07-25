@@ -2,86 +2,71 @@ import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { SectionHeader } from "../ui/SectionHeader";
 
-/** Landing bento only — replace Unsplash URLs later with brand assets */
-const U = (id, w = 900) =>
-  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${w}&q=85`;
-
-const BENTO_SERVICES = [
+/** Landing gallery tiles — replace image URLs later with your own assets */
+const GALLERY = [
   {
     name: "Quick Boost",
     description: "Fast reset for head and neck strain.",
-    image: U("photo-1515377905703-c4788e51af15"),
-    span: "lg:col-span-2 lg:row-span-2",
-    featured: true,
+    image:
+      "https://images.unsplash.com/photo-1515377905703-c4788e51af15?auto=format&fit=crop&w=1200&q=80",
+    className: "min-h-[280px] sm:col-span-2 sm:row-span-2 sm:min-h-0",
   },
   {
     name: "Power Up",
     description: "Energy for shoulders and upper body.",
-    image: U("photo-1600334129128-685c5582fd35"),
-    span: "",
+    image:
+      "https://images.unsplash.com/photo-1600334129128-685c5582fd35?auto=format&fit=crop&w=900&q=80",
+    className: "min-h-[220px] sm:col-span-2 sm:min-h-0",
   },
   {
     name: "Desk Detox",
     description: "Undo the posture fatigue from screens.",
-    image: U("photo-1571019614242-c5c5dee9f50e"),
-    span: "",
-  },
-  {
-    name: "Recovery Mode",
-    description: "Legs and lower body after a long day.",
-    image: U("photo-1519415510236-718bdfcd89c8"),
-    span: "lg:col-span-2",
+    image:
+      "https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=700&q=80",
+    className: "min-h-[220px] sm:min-h-0",
   },
   {
     name: "Deep Unplug",
     description: "Full-body calm and stress relief.",
-    image: U("photo-1544161515-4ab6ce6db874"),
-    span: "",
+    image:
+      "https://images.unsplash.com/photo-1544161515-4ab6ce6db874?auto=format&fit=crop&w=700&q=80",
+    className: "min-h-[220px] sm:min-h-0",
   },
 ];
 
-function BentoCard({ service }) {
-  const { name, description, image, span, featured } = service;
+function GalleryTile({ service }) {
+  const { name, description, image, className } = service;
 
   return (
     <Link
       to="/services"
-      className={`group relative flex flex-col overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-border/70 transition duration-300 hover:-translate-y-1 hover:shadow-premium hover:ring-accent/25 ${span}`}
+      className={`group relative block overflow-hidden rounded-2xl bg-surface ring-1 ring-border/60 ${className}`}
     >
+      <img
+        src={image}
+        alt={name}
+        className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.04]"
+        loading="lazy"
+        decoding="async"
+      />
       <div
-        className={`relative overflow-hidden bg-surface ${
-          featured ? "min-h-[200px] flex-1 sm:min-h-[240px]" : "aspect-[4/3]"
-        }`}
-      >
-        <img
-          src={image}
-          alt={name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-          loading="lazy"
-          decoding="async"
-        />
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/55 via-ink/10 to-transparent" />
-        <ArrowUpRight
-          size={18}
-          className="absolute right-4 top-4 text-white/80 opacity-0 transition group-hover:opacity-100"
-        />
-      </div>
-
-      <div className={`relative ${featured ? "absolute inset-x-0 bottom-0 p-6 sm:p-8" : "p-5"}`}>
-        <h3
-          className={`font-display font-bold tracking-tight ${
-            featured ? "text-2xl text-white sm:text-3xl" : "text-lg text-ink"
-          }`}
-        >
-          {name}
-        </h3>
-        <p
-          className={`mt-1.5 text-sm leading-6 ${
-            featured ? "max-w-sm text-white/85" : "text-sub"
-          }`}
-        >
-          {description}
-        </p>
+        className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/80 via-ink/25 to-ink/5"
+        aria-hidden
+      />
+      <div className="absolute inset-0 flex flex-col justify-end p-5 sm:p-6">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className="font-display text-xl font-bold tracking-tight text-white sm:text-[1.35rem]">
+              {name}
+            </h3>
+            <p className="mt-1.5 max-w-sm text-sm leading-5 text-white/80">
+              {description}
+            </p>
+          </div>
+          <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/15 text-white backdrop-blur-sm transition group-hover:bg-white group-hover:text-ink">
+            <ArrowUpRight size={16} />
+          </span>
+        </div>
       </div>
     </Link>
   );
@@ -94,12 +79,19 @@ export function ServicesSection() {
         <SectionHeader
           label="What we offer"
           title="Targeted relief for the discomfort you feel today"
-          description="Short at-home wellness sessions designed to be simple, convenient, and easy to book."
+          description="Short at-home wellness sessions — head, neck, shoulder, back, and leg — designed to be simple, convenient, and easy to book."
         />
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:auto-rows-[minmax(160px,auto)]">
-          {BENTO_SERVICES.map((service) => (
-            <BentoCard key={service.name} service={service} />
+        {/*
+          Gallery bento:
+          mobile  — stacked
+          sm+     — 4-col × 2-row fixed canvas
+                    [ Quick Boost 2×2 ] [ Power Up 2×1 ]
+                    [                 ] [ Desk 1 ][ Deep 1 ]
+        */}
+        <div className="grid grid-cols-1 gap-3 sm:h-[520px] sm:grid-cols-4 sm:grid-rows-2 sm:gap-4 lg:h-[580px]">
+          {GALLERY.map((service) => (
+            <GalleryTile key={service.name} service={service} />
           ))}
         </div>
 
