@@ -10,7 +10,7 @@ import { AppText } from "../components/ui/AppText";
 import { StatCard } from "../components/ui/StatCard";
 import { OrderCard } from "../components/orders/OrderCard";
 import { LoadingView } from "../components/feedback/LoadingView";
-import { formatRupee } from "../utils/order";
+import { formatRupee, navigateToOrder } from "../utils/order";
 
 export default function HomeScreen({ navigation }) {
   const { me, goingOnline, setOnline, refreshMe } = useExpertSession();
@@ -118,7 +118,7 @@ export default function HomeScreen({ navigation }) {
             <OrderCard
               key={o.id}
               order={o}
-              onPress={() => navigation.navigate("ActiveOrder", { bookingId: o.id })}
+              onPress={() => navigateToOrder(navigation, o)}
             />
           ))
         )}

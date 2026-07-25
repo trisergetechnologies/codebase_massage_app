@@ -8,11 +8,15 @@ import {
 } from "../../lib/dashboardStats";
 import { SessionStatusBadge } from "./SessionStatusBadge";
 
-export function OrderCard({ booking, className = "" }) {
+
+export function OrderCard({ booking, className = "", active = false }) {
+
   const title = sessionTitle(booking);
 
   return (
+
     <Link
+
       to={`/app/orders/${booking.id}`}
       className={`group flex items-center gap-4 rounded-2xl border border-border/80 bg-white p-4 shadow-sm transition-all duration-300 hover:border-accent/25 hover:shadow-premium active:scale-[0.99] lg:p-5 ${className}`}
     >
@@ -37,6 +41,11 @@ export function OrderCard({ booking, className = "" }) {
           className="text-muted transition group-hover:translate-x-0.5 group-hover:text-accent"
         />
       </div>
+
     </Link>
+
   );
+
 }
+
+

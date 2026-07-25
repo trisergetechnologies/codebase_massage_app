@@ -1,6 +1,7 @@
-/** Include OTP codes for expert-only active booking detail. */
+/** Include OTP codes for expert-only active booking detail (dev only). */
 function serializeBookingForExpert(booking, base) {
   const o = booking.toObject ? booking.toObject() : booking;
+  const isDev = process.env.NODE_ENV !== "production";
   return {
     ...base,
     sessionOtp: o.sessionOtp
@@ -9,8 +10,9 @@ function serializeBookingForExpert(booking, base) {
           endVerified: !!o.sessionOtp.endVerifiedAt,
           requiresStartOtp: o.status === "assigned" && !!o.sessionOtp.startCode && !o.sessionOtp.startVerifiedAt,
           requiresEndOtp: o.status === "in_progress" && !!o.sessionOtp.endCode && !o.sessionOtp.endVerifiedAt,
-          startCode: o.sessionOtp.startCode,
-          endCode: o.sessionOtp.endCode,
+          ...(isDev
+            ? { startCode: o.sessionOtp.startCode, endCode: o.sessionOtp.endCode }
+            : {}),
         }
       : null,
   };

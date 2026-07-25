@@ -6,6 +6,7 @@ const notify = require("./notify");
 const { genSessionOtp } = require("../lib/otp");
 const { isMongoObjectId, bookingRoomId } = require("../lib/ids");
 const { isExpertConnected } = require("../realtime/connections");
+const earningsService = require("./earnings");
 
 /**
  * Dispatcher — H3 k-ring + haversine; rank by skill match then distance.
@@ -111,6 +112,9 @@ function offerToExpert(io, booking, candidate) {
         price: i.price,
       })),
       total: booking.pricing.total,
+      estimatedEarning: Math.round(
+        (booking.pricing?.subtotal || 0) * earningsService.COMMISSION_RATE
+      ),
       offerExpiresInSec: env.DISPATCH_OFFER_TIMEOUT_SEC,
     };
 
@@ -159,6 +163,10 @@ async function runDispatch(io, bookingId) {
   try {
     let booking = await Booking.findById(bookingId);
     if (!booking) return;
+
+    if (booking.payment?.timing === "pay_now" && booking.payment?.status !== "paid") {
+      return;
+    }
 
     const room = bookingRoomId(booking);
 

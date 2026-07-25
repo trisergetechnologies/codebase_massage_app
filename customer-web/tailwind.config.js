@@ -5,7 +5,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["Inter", "system-ui", "-apple-system", "Segoe UI", "sans-serif"],
-        display: ['"Plus Jakarta Sans"', "Inter", "system-ui", "sans-serif"],
+        display: ["Fraunces", "Georgia", "serif"],
       },
       colors: {
         bg: "#ffffff",
@@ -44,17 +44,29 @@ export default {
         glow: "0 0 40px rgba(45, 212, 191, 0.15)",
       },
       borderRadius: {
+        card: "var(--card-radius)",
+        "card-sm": "var(--card-radius-sm)",
+        btn: "var(--button-radius)",
+        input: "var(--input-radius)",
+        chip: "var(--chip-radius)",
+        modal: "var(--modal-radius)",
         xl: "1rem",
         "2xl": "1.25rem",
         "3xl": "1.5rem",
         "4xl": "2rem",
       },
-      fontSize: {
-        "hero-sm": ["2.75rem", { lineHeight: "1.05", letterSpacing: "-0.03em" }],
-        hero: ["4rem", { lineHeight: "1.02", letterSpacing: "-0.04em" }],
-        "hero-lg": ["4.5rem", { lineHeight: "1", letterSpacing: "-0.04em" }],
-        section: ["2.5rem", { lineHeight: "1.1", letterSpacing: "-0.03em" }],
-        "section-lg": ["3rem", { lineHeight: "1.08", letterSpacing: "-0.03em" }],
+      transitionDuration: {
+        instant: "var(--duration-instant)",
+        fast: "var(--duration-fast)",
+        DEFAULT: "var(--duration-default)",
+        moderate: "var(--duration-moderate)",
+        slow: "var(--duration-slow)",
+      },
+      transitionTimingFunction: {
+        out: "var(--ease-out)",
+        "in-out": "var(--ease-in-out)",
+        spring: "var(--ease-spring)",
+        decel: "var(--ease-decel)",
       },
       letterSpacing: {
         premium: "0.02em",
@@ -64,13 +76,13 @@ export default {
           "0%": { opacity: "0", transform: "translateY(20px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
-        marquee: {
-          "0%": { transform: "translateX(0)" },
-          "100%": { transform: "translateX(-50%)" },
+        shimmer: {
+          "0%": { backgroundPosition: "200% 0" },
+          "100%": { backgroundPosition: "-200% 0" },
         },
-        float: {
-          "0%, 100%": { transform: "translateY(0)" },
-          "50%": { transform: "translateY(-8px)" },
+        "slide-up": {
+          "0%": { opacity: "0", transform: "translateY(24px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
         },
         pulseGlow: {
           "0%, 100%": { opacity: "0.4" },

@@ -28,6 +28,7 @@ export function Button({
       </a>
     );
   }
+
   return (
     <button type={type} className={cls} onClick={onClick} disabled={disabled} {...rest}>
       {children}

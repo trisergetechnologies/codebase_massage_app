@@ -12,6 +12,7 @@ import { api } from "../api";
 export default function CartScreen({ navigation }) {
   const cart = useCart();
   const [loc, setLoc] = useState(null);
+  const [locLoading, setLocLoading] = useState(true);
   const [permErr, setPermErr] = useState("");
   const [busy, setBusy] = useState(false);
   const [couponCode, setCouponCode] = useState("");
@@ -19,18 +20,22 @@ export default function CartScreen({ navigation }) {
 
   useEffect(() => {
     (async () => {
+      setLocLoading(true);
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== "granted") {
-          setPermErr("Location permission denied — using a default address.");
-          setLoc({ coords: { latitude: 12.9716, longitude: 77.6411 } });
+          setPermErr("Location permission is required to book. Enable it in settings.");
+          setLoc(null);
           return;
         }
         const here = await Location.getCurrentPositionAsync({});
         setLoc(here);
+        setPermErr("");
       } catch (e) {
-        setPermErr(e.message);
-        setLoc({ coords: { latitude: 12.9716, longitude: 77.6411 } });
+        setPermErr(e.message || "Could not get your location.");
+        setLoc(null);
+      } finally {
+        setLocLoading(false);
       }
     })();
   }, []);
@@ -57,7 +62,10 @@ export default function CartScreen({ navigation }) {
   }
 
   async function book() {
-    if (!loc) return;
+    if (!loc) {
+      Alert.alert("Location required", permErr || "Waiting for your location.");
+      return;
+    }
     setBusy(true);
     try {
       const ids = cart.items.flatMap((i) => Array(i.quantity || 1).fill(i.id));
@@ -199,10 +207,10 @@ export default function CartScreen({ navigation }) {
 
             <View style={{ height: spacing.xl }} />
             <Button
-              title="Checkout"
+              title="Confirm & find expert"
               onPress={book}
               loading={busy}
-              disabled={cart.items.length === 0}
+              disabled={cart.items.length === 0 || locLoading || !loc}
               fullWidth
               rightIcon={<Feather name="arrow-right" size={16} color={palette.textOnInk} />}
             />

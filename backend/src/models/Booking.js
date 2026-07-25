@@ -15,12 +15,16 @@ const lineItemSchema = new mongoose.Schema(
 );
 
 /**
- * Booking lifecycle:
- *   created -> searching (dispatch loop is running)
- *           -> assigned  (an expert accepted; en-route)
- *           -> in_progress (expert reached and started)
- *           -> completed
- *           -> cancelled  (terminal failure path, cancel by user/system)
+ * Booking lifecycle (hybrid Zepto + Rapido):
+ *   immediate:  created -> searching -> assigned -> in_progress -> completed
+ *   scheduled:  scheduled -> searching -> assigned -> in_progress -> completed
+ *
+ *   created     — brief state before dispatch starts
+ *   scheduled   — future booking; dispatch deferred until scheduledFor
+ *   searching   — dispatch loop running
+ *   assigned    — expert accepted; en-route
+ *   in_progress — session started (OTP verified)
+ *   completed / cancelled — terminal
  *
  * `addOns` can grow while status === 'in_progress'; the totals are recomputed.
  */
@@ -65,6 +69,11 @@ const bookingSchema = new mongoose.Schema(
         type: String,
         enum: ["unpaid", "authorized", "paid", "refunded", "failed"],
         default: "unpaid",
+      },
+      timing: {
+        type: String,
+        enum: ["pay_now", "pay_later"],
+        default: "pay_later",
       },
       method: { type: String, default: "card_test" },
       providerRef: { type: String, default: "" },

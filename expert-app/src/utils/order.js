@@ -33,18 +33,27 @@ export function orderStatusLabel(status, timeline = {}) {
   return map[status] || status;
 }
 
-/** @returns {'navigating'|'start_otp'|'session'|'end_otp'|'done'} */
+/** @returns {'navigating'|'arrived'|'start_otp'|'session'|'end_otp'|'done'} */
 export function getActiveOrderStep(booking) {
   if (!booking) return "navigating";
   if (booking.status === "completed" || booking.status === "cancelled") return "done";
   if (booking.status === "in_progress") return "session";
   if (booking.status === "assigned") {
     if (!booking.timeline?.arrivedAt) return "navigating";
-    return "start_otp";
+    return "arrived";
   }
   return "navigating";
 }
 
 export function isActiveOrder(status) {
   return status === "assigned" || status === "in_progress";
+}
+
+export function navigateToOrder(navigation, order) {
+  const id = order.id || order._id;
+  if (isActiveOrder(order.status)) {
+    navigation.navigate("ActiveOrder", { bookingId: id });
+  } else {
+    navigation.navigate("OrderDetail", { bookingId: id });
+  }
 }

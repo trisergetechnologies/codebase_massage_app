@@ -21,7 +21,7 @@ export function PublicLayout() {
   const location = useLocation();
   const { isAuthenticated, loading: authLoading } = useAuth();
   const { openLogin } = useAuthModal();
-  const { items, clear, isEmpty } = useCart();
+  const { items, clear, isEmpty, totals } = useCart();
   const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
@@ -71,7 +71,7 @@ export function PublicLayout() {
     <>
       <ScrollToTop />
       <Nav />
-      <div className={showFloatingCart && !isEmpty ? "pb-24 lg:pb-0" : undefined}>
+      <div className={showFloatingCart && !isEmpty ? "pb-24 pt-14 lg:pb-0" : "pt-14"}>
         <Outlet />
       </div>
       {showFooter ? <Footer /> : null}
@@ -81,6 +81,8 @@ export function PublicLayout() {
       <AddressBookingModal
         open={bookingOpen}
         serviceIds={items.flatMap((i) => Array(i.quantity).fill(i.service.id))}
+        serviceCount={totals.count}
+        orderTotal={Math.round(totals.price * 1.05)}
         onClose={() => setBookingOpen(false)}
         onBooked={onBooked}
       />

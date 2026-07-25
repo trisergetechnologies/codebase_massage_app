@@ -1,4 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600&family=Inter:wght@400;500;600;700&display=swap");
+
+@import "./design/tokens.css";
 
 @tailwind base;
 @tailwind components;
@@ -69,7 +71,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 3px solid var(--color-primary);
     outline-offset: 2px;
   }
 }
@@ -121,6 +123,19 @@
     display: none;
   }
 
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .transition-default {
+    transition-duration: var(--duration-default);
+    transition-timing-function: var(--ease-out);
+  }
+
+  .animate-fade-up {
+    animation: fade-up var(--duration-slow) var(--ease-out) forwards;
+  }
+
   .animate-delay-1 {
     animation-delay: 0.1s;
   }
@@ -144,7 +159,9 @@
     background-clip: text;
     color: transparent;
   }
+}
 
+@layer utilities {
   .landing-noise {
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
   }

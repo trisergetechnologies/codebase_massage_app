@@ -14,7 +14,7 @@ function hasCoords(a) {
   return typeof a?.lat === "number" && typeof a?.lng === "number";
 }
 
-export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
+export function AddressBookingModal({ open, serviceIds, serviceCount = 0, orderTotal = null, onClose, onBooked }) {
   const { user, updateUser } = useAuth();
   const toast = useToast();
   const [selectedId, setSelectedId] = useState("");
@@ -104,7 +104,7 @@ export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
       onBooked?.(booking);
       onClose?.();
     } catch (e) {
-      toast.dismiss(loadId);
+      if (loadId) toast.dismiss(loadId);
       toast.error(friendlyError(e.message));
     } finally {
       setLoading(false);
@@ -267,6 +267,21 @@ export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
               + Add new address
             </button>
           )}
+
+        {!showForm && addresses.length > 0 && (
+          <div className="mt-8 space-y-3">
+            {serviceCount > 0 && orderTotal != null ? (
+              <div className="rounded-xl border border-border bg-surface px-4 py-3">
+                <p className="text-sm text-sub">
+                  {serviceCount} service{serviceCount !== 1 ? "s" : ""} selected
+                </p>
+                <p className="mt-1 text-lg font-semibold text-ink">
+                  Total ₹{Number(orderTotal).toLocaleString("en-IN")}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        )}
         </div>
 
         {!showForm && addresses.length > 0 && (
@@ -277,7 +292,7 @@ export function AddressBookingModal({ open, serviceIds, onClose, onBooked }) {
               onClick={confirmBooking}
               disabled={loading || !selectedId}
             >
-              Confirm booking
+              Confirm &amp; find expert
             </Button>
           </div>
         )}

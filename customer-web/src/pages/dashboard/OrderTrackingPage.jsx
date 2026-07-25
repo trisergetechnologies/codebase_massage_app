@@ -11,7 +11,7 @@ import {
 } from "../../lib/dashboardStats";
 import { SessionTimeline } from "../../components/dashboard/SessionTimeline";
 import { BookingMap } from "../../components/tracking/BookingMap";
-import { Skeleton } from "../../components/ui/Skeleton";
+import { SkeletonTracking } from "../../components/ui/Skeleton";
 import { Button } from "../../components/ui/Button";
 import { SlideOver } from "../../components/dashboard/SlideOver";
 import { friendlyError, cancelReasonMessage, toastMessages } from "../../lib/messages";
@@ -27,6 +27,7 @@ export function OrderTrackingPage() {
   const toast = useToast();
   const [booking, setBooking] = useState(null);
   const [expertLoc, setExpertLoc] = useState(null);
+  const [candidateEtaMin, setCandidateEtaMin] = useState(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [addonOpen, setAddonOpen] = useState(false);
@@ -66,13 +67,30 @@ export function OrderTrackingPage() {
           });
 
           socket.on("booking:assigned", (data) => {
+            setCandidateEtaMin(null);
             loadBooking().catch(() => {});
             if (data.expert?.location) setExpertLoc(data.expert.location);
-            toast.success("Expert assigned");
+            const name = data.expert?.name || "Expert";
+            const eta = data.etaMin ?? data.expert?.etaMin ?? "—";
+            toast.success(`Expert assigned · ${name} · ${eta} min`);
+          });
+
+          socket.on("booking:searching", ({ candidateEtaMin: eta }) => {
+            if (eta != null) setCandidateEtaMin(eta);
+          });
+
+          socket.on("booking:payment", () => {
+            loadBooking().catch(() => {});
+            toast.success(toastMessages.paymentSuccess);
           });
 
           socket.on("booking:expert_location", ({ lat, lng }) => {
             setExpertLoc({ lat, lng });
+            loadBooking().catch(() => {});
+          });
+
+          socket.on("booking:arrived", () => {
+            loadBooking().catch(() => {});
           });
 
           socket.on("booking:addon", () => {
@@ -106,6 +124,8 @@ export function OrderTrackingPage() {
         socket.emit("booking:unsubscribe", { bookingId: id });
         socket.off("booking:status");
         socket.off("booking:assigned");
+        socket.off("booking:searching");
+        socket.off("booking:payment");
         socket.off("booking:expert_location");
         socket.off("booking:addon");
         socket.off("booking:failed");
@@ -181,26 +201,22 @@ export function OrderTrackingPage() {
   }
 
   if (loading) {
-    return (
-      <div className="space-y-4 lg:grid lg:grid-cols-5 lg:gap-8 lg:space-y-0">
-        <Skeleton className="h-8 w-40 lg:col-span-5" />
-        <Skeleton className="h-64 rounded-2xl lg:col-span-3" />
-        <Skeleton className="h-96 rounded-2xl lg:col-span-2" />
-      </div>
-    );
+    return <SkeletonTracking />;
   }
 
   if (!booking) {
     return (
-      <p className="text-sub">
+      <p className="type-body text-sub">
         Order not found.{" "}
-        <Link to="/app/orders" className="font-medium text-accent">
+        <Link to="/app/orders" className="font-medium text-brand">
           Back to My Orders
         </Link>
       </p>
     );
   }
 
+  const backLabel =
+    booking.status === "completed" || booking.status === "cancelled" ? "My Orders" : "Back";
   const title = sessionTitle(booking);
   const isLive = ACTIVE_STATUSES.includes(booking.status);
   const showMap = MAP_STATUSES.includes(booking.status);
@@ -361,10 +377,10 @@ export function OrderTrackingPage() {
       <button
         type="button"
         onClick={() => navigate("/app/orders")}
-        className="mb-4 flex items-center gap-2 text-sm font-medium text-accent lg:mb-6"
+        className="mb-4 flex min-h-11 items-center gap-2 type-body font-medium text-brand lg:mb-6"
       >
         <ArrowLeft size={18} />
-        My Orders
+        {backLabel}
       </button>
 
       <div className="lg:grid lg:grid-cols-5 lg:gap-8">

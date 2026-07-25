@@ -47,7 +47,7 @@ async function resolveServices(serviceIds) {
 
 /**
  * POST /api/bookings
- * Body: { serviceIds: string[], location: { lat, lng, address } }
+ * Body: { serviceIds: string[], location: { lat, lng, address }, scheduledFor?: ISO date, couponCode?: string }
  * serviceIds: service slugs (preferred) or legacy ObjectIds.
  */
 const create = asyncHandler(async (req, res) => {
@@ -161,7 +161,7 @@ const get = asyncHandler(async (req, res) => {
 });
 
 const cancel = asyncHandler(async (req, res) => {
-  const booking = await loadBooking(req.params.id);
+  const booking = await loadBooking(req.params.id, { customer: req.auth.sub });
   if (!booking) return res.status(404).json({ error: "not_found" });
   if (["completed", "cancelled"].includes(booking.status)) {
     return res.status(400).json({ error: "already_terminal" });
@@ -180,6 +180,7 @@ const cancel = asyncHandler(async (req, res) => {
   }
   notify.emitToRoom(req.app.get("io"), `booking:${bookingRoomId(booking)}`, "booking:status", {
     status: "cancelled",
+    cancelReason: "user_cancelled",
   });
   res.json(serializeBooking(booking));
 });
@@ -222,13 +223,17 @@ const addAddOn = asyncHandler(async (req, res) => {
 });
 
 const confirmPayment = asyncHandler(async (req, res) => {
-  const booking = await loadBooking(req.params.id);
+  const booking = await loadBooking(req.params.id, { customer: req.auth.sub });
   if (!booking) return res.status(404).json({ error: "not_found" });
   const result = await paymentService.capture(booking, req.body.providerRef);
   booking.payment.status = result.status;
   booking.payment.providerRef = result.providerRef;
   booking.payment.method = result.method;
   await booking.save();
+  notify.emitToRoom(req.app.get("io"), `booking:${bookingRoomId(booking)}`, "booking:payment", {
+    status: booking.payment.status,
+    method: booking.payment.method,
+  });
   res.json(serializeBooking(booking));
 });
 
@@ -294,6 +299,9 @@ const expertComplete = asyncHandler(async (req, res) => {
   if (!booking) return res.status(404).json({ error: "not_found" });
   if (booking.status !== "in_progress") {
     return res.status(400).json({ error: "invalid_status" });
+  }
+  if (booking.payment?.timing === "pay_later" && booking.payment?.status !== "paid") {
+    return res.status(402).json({ error: "payment_required" });
   }
   const { otp } = req.body;
   if (!otp || booking.sessionOtp?.endCode !== String(otp).trim()) {

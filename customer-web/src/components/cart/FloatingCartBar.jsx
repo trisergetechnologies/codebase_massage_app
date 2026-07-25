@@ -1,3 +1,4 @@
+import { ShoppingBag, ArrowRight } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 
 export function FloatingCartBar() {
@@ -5,8 +6,8 @@ export function FloatingCartBar() {
 
   if (isEmpty) return null;
 
-  const label =
-    totals.count === 1 ? "1 session selected" : `${totals.count} sessions selected`;
+  const sessions =
+    totals.count === 1 ? "1 session" : `${totals.count} sessions`;
 
   return (
     <div
