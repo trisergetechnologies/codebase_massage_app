@@ -15,8 +15,8 @@ export default function CartScreen({ navigation }) {
   const [locLoading, setLocLoading] = useState(true);
   const [permErr, setPermErr] = useState("");
   const [busy, setBusy] = useState(false);
-  const [discount, setDiscount] = useState("");
-  const [paymentTiming, setPaymentTiming] = useState("pay_later");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   useEffect(() => {
     (async () => {
@@ -41,7 +41,25 @@ export default function CartScreen({ navigation }) {
   }, []);
 
   const tax = Math.round(cart.total * 0.05);
-  const grand = cart.total + tax;
+  const grand = Math.max(0, cart.total + tax - couponDiscount);
+
+  async function applyCoupon() {
+    Alert.prompt("Discount code", "Enter your coupon", async (code) => {
+      if (!code?.trim()) return;
+      try {
+        const res = await api.validateCoupon(code.trim());
+        if (res.valid) {
+          setCouponCode(res.code);
+          setCouponDiscount(res.discount);
+          Alert.alert("Applied", `₹${res.discount} off`);
+        } else {
+          Alert.alert("Invalid code", "That coupon is not valid.");
+        }
+      } catch (e) {
+        Alert.alert("Error", e.message);
+      }
+    });
+  }
 
   async function book() {
     if (!loc) {
@@ -50,13 +68,12 @@ export default function CartScreen({ navigation }) {
     }
     setBusy(true);
     try {
-      // Expand cart by quantity for backend (one line item per body)
       const ids = cart.items.flatMap((i) => Array(i.quantity || 1).fill(i.id));
       const booking = await api.createBooking(ids, {
         lat: loc.coords.latitude,
         lng: loc.coords.longitude,
         address: "Current location",
-      }, paymentTiming);
+      }, { couponCode: couponDiscount ? couponCode : "" });
       cart.clear();
       navigation.replace("Booking", { bookingId: booking.id });
     } catch (e) {
@@ -122,9 +139,9 @@ export default function CartScreen({ navigation }) {
               <View style={{ flexDirection: "row", alignItems: "center" }}>
                 <Feather name="tag" size={14} color={palette.textSecondary} />
                 <Text variant="bodySm" color="secondary" style={{ marginLeft: spacing.sm, flex: 1 }}>
-                  {discount ? discount : "Enter discount code"}
+                  {couponCode ? `${couponCode} (−₹${couponDiscount})` : "Enter discount code"}
                 </Text>
-                <Pressable hitSlop={8} onPress={() => Alert.alert("Coupons coming soon")}>
+                <Pressable hitSlop={8} onPress={applyCoupon}>
                   <Text variant="bodySmMd" color="ink">Apply</Text>
                 </Pressable>
               </View>
@@ -173,41 +190,6 @@ export default function CartScreen({ navigation }) {
             <Row label="Total" value={`₹${grand}`} bold />
 
             <View style={{ height: spacing.lg }} />
-            <Text variant="bodyMdMd">When would you like to pay?</Text>
-            <View style={{ height: spacing.sm }} />
-            <Pressable
-              onPress={() => setPaymentTiming("pay_now")}
-              style={{
-                borderRadius: radii.lg,
-                borderWidth: 1.5,
-                borderColor: paymentTiming === "pay_now" ? palette.ink : palette.hairline,
-                backgroundColor: paymentTiming === "pay_now" ? palette.surfaceSoft : palette.bg,
-                padding: spacing.md,
-                marginBottom: spacing.sm,
-              }}
-            >
-              <Text variant="bodyMdMd">Pay now</Text>
-              <Text variant="bodySm" color="secondary" style={{ marginTop: 4 }}>
-                Pay to confirm and find your expert
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setPaymentTiming("pay_later")}
-              style={{
-                borderRadius: radii.lg,
-                borderWidth: 1.5,
-                borderColor: paymentTiming === "pay_later" ? palette.ink : palette.hairline,
-                backgroundColor: paymentTiming === "pay_later" ? palette.surfaceSoft : palette.bg,
-                padding: spacing.md,
-              }}
-            >
-              <Text variant="bodyMdMd">Pay later</Text>
-              <Text variant="bodySm" color="secondary" style={{ marginTop: 4 }}>
-                Find expert first, pay anytime before session ends
-              </Text>
-            </Pressable>
-
-            <View style={{ height: spacing.lg }} />
             <View
               style={{
                 flexDirection: "row",
@@ -225,7 +207,7 @@ export default function CartScreen({ navigation }) {
 
             <View style={{ height: spacing.xl }} />
             <Button
-              title={paymentTiming === "pay_now" ? "Continue to payment" : "Confirm & find expert"}
+              title="Confirm & find expert"
               onPress={book}
               loading={busy}
               disabled={cart.items.length === 0 || locLoading || !loc}

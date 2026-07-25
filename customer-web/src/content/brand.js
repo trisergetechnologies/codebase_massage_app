@@ -11,7 +11,7 @@ export const brand = {
     "Our services are intended for general wellness and relaxation. They are not a substitute for medical treatment, physiotherapy, diagnosis, or emergency care.",
   mission: "Make everyday physical relief accessible, affordable, and available within minutes.",
   headlines: {
-    primary: "Relief, Delivered.",
+    primary: "Relief Delivered.",
     secondary: "Feel Better In Minutes.",
     supporting: "Quick and affordable wellness sessions delivered at your doorstep by trained and verified experts.",
   },

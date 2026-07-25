@@ -10,6 +10,8 @@ const { signToken, verifyToken } = require("../middleware/auth");
 
 const env = require("../config/env");
 
+const sms = require("../services/sms");
+
 const { serializeUser, serializeExpert } = require("../lib/serialize");
 
 const { isProfileComplete } = require("../lib/profile");
@@ -77,6 +79,12 @@ const requestOtp = asyncHandler(async (req, res) => {
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
   await Otp.create({ phone, code, role, expiresAt });
+
+  try {
+    await sms.sendOtp(phone, code);
+  } catch (err) {
+    console.warn("[auth] SMS failed:", err.message);
+  }
 
   return res.json({ ok: true });
 

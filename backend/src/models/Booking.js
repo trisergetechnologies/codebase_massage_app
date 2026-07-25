@@ -16,14 +16,14 @@ const lineItemSchema = new mongoose.Schema(
 
 /**
  * Booking lifecycle (hybrid Zepto + Rapido):
- *   pay_now:    awaiting_payment -> (paid) -> created -> searching -> assigned -> ...
- *   pay_later:  created -> searching -> assigned -> in_progress -> completed
+ *   immediate:  created -> searching -> assigned -> in_progress -> completed
+ *   scheduled:  scheduled -> searching -> assigned -> in_progress -> completed
  *
- *   awaiting_payment — pay-now booking saved; dispatch blocked until paid
- *   created          — brief state before dispatch starts (pay-later)
- *   searching        — dispatch loop running
- *   assigned         — expert accepted; en-route
- *   in_progress      — session started (OTP verified)
+ *   created     — brief state before dispatch starts
+ *   scheduled   — future booking; dispatch deferred until scheduledFor
+ *   searching   — dispatch loop running
+ *   assigned    — expert accepted; en-route
+ *   in_progress — session started (OTP verified)
  *   completed / cancelled — terminal
  *
  * `addOns` can grow while status === 'in_progress'; the totals are recomputed.
@@ -44,18 +44,13 @@ const bookingSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: [
-        "awaiting_payment",
-        "created",
-        "searching",
-        "assigned",
-        "in_progress",
-        "completed",
-        "cancelled",
-      ],
+      enum: ["created", "scheduled", "searching", "assigned", "in_progress", "completed", "cancelled"],
       default: "created",
       index: true,
     },
+
+    scheduledFor: { type: Date, default: null, index: true },
+    couponCode: { type: String, default: "" },
 
     // Quoted ETA snapshot at assignment-time (minutes).
     quotedEtaMin: { type: Number, default: null },
@@ -63,6 +58,8 @@ const bookingSchema = new mongoose.Schema(
     pricing: {
       subtotal: { type: Number, default: 0 },
       tax: { type: Number, default: 0 },
+      discount: { type: Number, default: 0 },
+      surgeMultiplier: { type: Number, default: 1 },
       total: { type: Number, default: 0 },
       currency: { type: String, default: "INR" },
     },
@@ -117,12 +114,15 @@ const bookingSchema = new mongoose.Schema(
 
 bookingSchema.plugin(publicIdPlugin);
 
-bookingSchema.methods.recomputePricing = function () {
-  const subtotal = this.items.reduce((sum, it) => sum + (it.price || 0), 0);
+bookingSchema.methods.recomputePricing = function (surgeMultiplier = 1, discount = 0) {
+  const base = this.items.reduce((sum, it) => sum + (it.price || 0), 0);
+  const subtotal = Math.round(base * surgeMultiplier);
   const tax = Math.round(subtotal * 0.05);
   this.pricing.subtotal = subtotal;
+  this.pricing.surgeMultiplier = surgeMultiplier;
+  this.pricing.discount = discount;
   this.pricing.tax = tax;
-  this.pricing.total = subtotal + tax;
+  this.pricing.total = Math.max(0, subtotal + tax - discount);
   return this.pricing;
 };
 

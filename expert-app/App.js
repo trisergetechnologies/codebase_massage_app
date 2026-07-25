@@ -22,6 +22,10 @@ import LoginScreen from "./src/screens/LoginScreen";
 import MainTabs from "./src/navigation/MainTabs";
 import ActiveOrderScreen from "./src/screens/ActiveOrderScreen";
 import OrderDetailScreen from "./src/screens/OrderDetailScreen";
+import ProfileEditScreen from "./src/screens/ProfileEditScreen";
+import TrainingScreen from "./src/screens/TrainingScreen";
+import KycScreen from "./src/screens/KycScreen";
+import SupportScreen from "./src/screens/SupportScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -101,8 +105,16 @@ export default function App() {
               <Stack.Screen
                 name="OrderDetail"
                 component={OrderDetailScreen}
-                options={{ title: "Order details", presentation: "card" }}
+                options={{ title: "Order detail" }}
               />
+              <Stack.Screen
+                name="ProfileEdit"
+                component={ProfileEditScreen}
+                options={{ title: "Edit profile" }}
+              />
+              <Stack.Screen name="Training" component={TrainingScreen} options={{ title: "Training" }} />
+              <Stack.Screen name="Kyc" component={KycScreen} options={{ title: "KYC" }} />
+              <Stack.Screen name="Support" component={SupportScreen} options={{ title: "Support" }} />
             </Stack.Navigator>
             <IncomingOrderModal />
           </ExpertSessionProvider>

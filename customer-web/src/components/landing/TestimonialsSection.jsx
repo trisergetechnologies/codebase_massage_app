@@ -1,39 +1,52 @@
+import { Star } from "lucide-react";
+import { brand } from "../../content/brand";
 import { SectionHeader } from "../ui/SectionHeader";
 
-/** Layout placeholders — no fabricated quotes */
-const placeholders = [
-  { role: "Working professional", location: "Urban area" },
-  { role: "Remote worker", location: "Suburban area" },
-  { role: "Daily commuter", location: "Metro area" },
+const pillars = [
+  { stat: "15 min", label: "Typical expert arrival window" },
+  { stat: "100%", label: "Experts verified before going live" },
+  { stat: "₹699+", label: "Affordable session pricing" },
 ];
 
 export function TestimonialsSection() {
   return (
-    <section className="bg-surface py-20 md:py-28" aria-label="Customer stories">
-      <div className="mx-auto max-w-[1200px] px-4 md:px-8">
+    <section className="section-pad bg-premium-gradient" aria-label="Why customers trust us">
+      <div className="container-premium">
         <SectionHeader
-          label="Experiences"
-          title="Consistent experience, every session"
+          label="Trust & quality"
+          title="Built for everyday relief, delivered professionally"
           description="Every session follows defined service standards. Professional conduct is mandatory during every interaction."
         />
 
         <div className="grid gap-6 md:grid-cols-3">
-          {placeholders.map((p, i) => (
-            <article
-              key={i}
-              className="flex min-h-[220px] flex-col justify-between rounded-2xl border border-dashed border-border bg-white p-8"
-            >
-              <div className="space-y-3">
-                <div className="h-3 w-full rounded bg-surface" />
-                <div className="h-3 w-[90%] rounded bg-surface" />
-                <div className="h-3 w-[75%] rounded bg-surface" />
-              </div>
-              <div className="mt-8 border-t border-border pt-6">
-                <p className="text-sm font-semibold text-ink">{p.role}</p>
-                <p className="text-sm text-muted">{p.location}</p>
-                <p className="mt-2 text-xs text-muted">Testimonial placeholder</p>
-              </div>
+          {pillars.map((p) => (
+            <article key={p.label} className="card-premium p-8 text-center">
+              <p className="font-display text-4xl font-extrabold tracking-tight text-accent">
+                {p.stat}
+              </p>
+              <p className="mt-3 text-sm font-medium leading-6 text-sub">{p.label}</p>
             </article>
+          ))}
+        </div>
+
+        <div className="mt-12 grid gap-6 md:grid-cols-3">
+          {brand.principles.slice(0, 3).map((principle) => (
+            <div
+              key={principle}
+              className="flex items-start gap-4 rounded-2xl border border-border/60 bg-white/80 p-6 shadow-sm"
+            >
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent-soft">
+                <Star size={18} className="text-accent" fill="currentColor" />
+              </span>
+              <div>
+                <p className="font-semibold text-ink">{principle}</p>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  {brand.whyChoose.find((w) =>
+                    w.title.toLowerCase().includes(principle.toLowerCase())
+                  )?.body || brand.customerPromise[0]}
+                </p>
+              </div>
+            </div>
           ))}
         </div>
       </div>

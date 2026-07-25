@@ -1,4 +1,6 @@
 const ERROR_MAP = {
+  "Failed to fetch":
+    "Cannot reach the server. Start the backend (cd backend && npm run dev) on port 4000, then refresh.",
   phone_and_role_required: "Please enter a valid phone number.",
   missing_fields: "Please complete all required fields.",
   invalid_or_expired_otp: "That code didn't work. Try again.",

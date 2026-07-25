@@ -16,25 +16,26 @@ function pageLinks(isAuthenticated) {
   }
   return [
     { to: "/", label: "Home" },
-    { to: "/services", label: "Services" }
+    { to: "/services", label: "Services" },
+    { to: "/cities", label: "Cities" },
+    { to: "/How-it-works?", label: "How it works?" },
+    { to: "/about-us", label: "About Us" },
+    { to: "/support", label: "Support" },
+    { to: "/careers", label: "Career" },
   ];
 }
 
-function CartButton({ onClick, count, className = "", inverted = false }) {
+function CartButton({ onClick, count, className = "" }) {
   return (
     <button
       type="button"
-      className={`relative grid size-10 shrink-0 place-items-center rounded-full border shadow-sm transition sm:size-11 ${
-        inverted
-          ? "border-white/20 bg-white/10 text-white hover:border-white/40"
-          : "border-border/80 bg-white/80 text-ink hover:border-accent/30"
-      } ${className}`}
+      className={`relative grid size-10 shrink-0 place-items-center rounded-full border border-accent bg-accent text-white shadow-sm transition hover:bg-accent-hover sm:size-11 ${className}`}
       onClick={onClick}
       aria-label={`Cart, ${count} items`}
     >
       <ShoppingBag size={20} strokeWidth={1.75} />
       {count > 0 && (
-        <span className="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-white">
+        <span className="absolute -right-0.5 -top-0.5 grid min-w-5 place-items-center rounded-full bg-white px-1 text-[10px] font-bold text-accent">
           {count}
         </span>
       )}
@@ -46,27 +47,11 @@ export function Nav() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
-  const [heroNav, setHeroNav] = useState(false);
   const { totals, setOpen: setCartOpen } = useCart();
   const { isAuthenticated, user, logout } = useAuth();
   const { openLogin } = useAuthModal();
   const links = pageLinks(isAuthenticated);
   const homeTo = isAuthenticated ? "/services" : "/";
-  const onLanding = location.pathname === "/" && !isAuthenticated;
-  const lightLanding = onLanding;
-
-  useEffect(() => {
-    if (!onLanding) {
-      setHeroNav(false);
-      return;
-    }
-    function onScroll() {
-      setHeroNav(window.scrollY < 80);
-    }
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [onLanding]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -89,43 +74,31 @@ export function Nav() {
 
   return (
     <>
-      <header
-        className={`fixed top-0 z-50 w-full transition-colors duration-default ease-out ${
-          lightLanding && heroNav
-            ? "border-b border-transparent bg-transparent text-ink"
-            : "border-b border-border bg-surface/95 text-ink shadow-sm backdrop-blur-md"
-        }`}
-      >
-        <div className="mx-auto flex h-14 min-h-[56px] max-w-content items-center justify-between gap-2 px-5 sm:px-6 md:px-8">
+      <header className="sticky top-0 z-50 border-b border-border/60 bg-white/90 text-ink shadow-xs backdrop-blur-xl transition-all duration-300">
+        <div className="mx-auto flex h-16 min-h-[4rem] max-w-[1200px] items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 md:h-[4.75rem] md:px-8">
           <Link
             to={homeTo}
-            className="flex min-w-0 items-center gap-2 no-underline text-ink sm:gap-3"
+            className="flex min-w-0 items-center gap-2 text-ink no-underline sm:gap-3"
             onClick={closeMenu}
           >
-            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent text-xs font-bold text-white sm:size-10 sm:text-sm">
+            <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-accent font-display text-xs font-extrabold tracking-tight text-white shadow-sm ring-1 ring-accent/20 sm:size-10 sm:text-sm">
               R
             </span>
-            <span className="hidden truncate text-sm font-semibold sm:inline">
-              R · Relief, Delivered
+            <span className="hidden truncate font-display text-[15px] font-bold tracking-tight sm:inline">
+              Reliefhai
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-6 md:flex" aria-label="Primary">
+          <nav className="hidden items-center gap-6 md:flex lg:gap-8" aria-label="Primary">
             {links.map((l) => (
               <Link
                 key={l.to}
                 to={l.to}
-                className="type-body font-medium text-sub transition hover:text-ink"
+                className="text-[15px] font-medium text-sub transition hover:text-ink"
               >
                 {l.label}
               </Link>
             ))}
-            <Link
-              to="/services"
-              className="inline-flex h-10 min-h-[40px] items-center justify-center rounded-btn bg-accent px-5 text-sm font-semibold text-white shadow-sm transition-default hover:bg-[var(--color-primary-hover)]"
-            >
-              Book now
-            </Link>
           </nav>
 
           <div className="hidden items-center gap-2 md:flex">
@@ -136,7 +109,7 @@ export function Nav() {
               <button
                 type="button"
                 onClick={() => openLogin()}
-                className="grid size-11 place-items-center rounded-full border border-border bg-surface text-sub shadow-sm hover:text-brand"
+                className="grid size-11 place-items-center rounded-full border border-border/80 bg-accent text-white shadow-sm transition hover:bg-accent-hover"
                 aria-label="Sign in"
               >
                 <LogIn size={20} strokeWidth={1.75} />
@@ -148,7 +121,7 @@ export function Nav() {
             <CartButton onClick={() => setCartOpen(true)} count={totals.count} />
             <button
               type="button"
-              className="grid size-10 place-items-center rounded-full border border-border bg-surface text-ink shadow-sm"
+              className="grid size-11 place-items-center rounded-full border border-border/80 bg-accent text-white shadow-sm transition hover:bg-accent-hover"
               onClick={() => setMenuOpen(true)}
               aria-expanded={menuOpen}
               aria-label="Open menu"

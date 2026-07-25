@@ -10,6 +10,9 @@ const { serializeBooking } = require("../lib/serialize");
 const { serializeBookingForExpert } = require("../lib/serializeExpertBooking");
 const { genSessionOtp } = require("../lib/otp");
 const earningsService = require("../services/earnings");
+const surgeService = require("../services/surge");
+const couponService = require("../services/coupons");
+const paymentService = require("../services/payment");
 const { loadExpertFromAuth } = require("../lib/expertAuth");
 
 function startOfDay(d = new Date()) {
@@ -44,19 +47,17 @@ async function resolveServices(serviceIds) {
 
 /**
  * POST /api/bookings
- * Body: { serviceIds: string[], location: { lat, lng, address }, paymentTiming?: 'pay_now'|'pay_later' }
+ * Body: { serviceIds: string[], location: { lat, lng, address }, scheduledFor?: ISO date, couponCode?: string }
  * serviceIds: service slugs (preferred) or legacy ObjectIds.
  */
 const create = asyncHandler(async (req, res) => {
-  const { serviceIds, location, paymentTiming } = req.body;
+  const { serviceIds, location, scheduledFor, couponCode } = req.body;
   if (!Array.isArray(serviceIds) || serviceIds.length === 0) {
     return res.status(400).json({ error: "serviceIds_required" });
   }
   if (!location || typeof location.lat !== "number" || typeof location.lng !== "number") {
     return res.status(400).json({ error: "location_required" });
   }
-
-  const timing = paymentTiming === "pay_now" ? "pay_now" : "pay_later";
 
   const services = await resolveServices(serviceIds);
   if (services.length === 0) return res.status(400).json({ error: "no_valid_services" });
@@ -70,6 +71,17 @@ const create = asyncHandler(async (req, res) => {
     isAddOn: false,
   }));
 
+  const surgeMultiplier = await surgeService.getMultiplier(location.lat, location.lng);
+  const coupon = couponService.validate(couponCode);
+  if (couponCode && !coupon.valid) {
+    return res.status(400).json({ error: "invalid_coupon" });
+  }
+
+  const scheduleDate = scheduledFor ? new Date(scheduledFor) : null;
+  if (scheduledFor && Number.isNaN(scheduleDate.getTime())) {
+    return res.status(400).json({ error: "invalid_scheduled_for" });
+  }
+
   const booking = new Booking({
     customer: req.auth.sub,
     items,
@@ -79,17 +91,18 @@ const create = asyncHandler(async (req, res) => {
       lng: location.lng,
       h3Index: geo.toCell(location.lat, location.lng),
     },
-    status: timing === "pay_now" ? "awaiting_payment" : "created",
-    payment: {
-      status: "unpaid",
-      timing,
-    },
+    status: scheduleDate && scheduleDate > new Date() ? "scheduled" : "created",
+    scheduledFor: scheduleDate,
+    couponCode: coupon.valid ? coupon.code : "",
   });
-  booking.recomputePricing();
+  booking.recomputePricing(surgeMultiplier, coupon.discount || 0);
   await booking.save();
 
-  if (timing === "pay_later") {
-    setImmediate(() => dispatcher.runDispatch(req.app.get("io"), booking._id));
+  const io = req.app.get("io");
+  if (booking.status === "scheduled") {
+    dispatcher.scheduleDispatch(io, booking._id, booking.scheduledFor);
+  } else {
+    setImmediate(() => dispatcher.runDispatch(io, booking._id));
   }
 
   res.status(201).json(serializeBooking(booking));
@@ -107,7 +120,9 @@ const list = asyncHandler(async (req, res) => {
   const scope = req.query.scope;
 
   if (req.auth.role === "customer") filter.customer = req.auth.sub;
-  if (req.auth.role === "expert") {
+  if (req.auth.role === "admin") {
+    /* no filter — all bookings */
+  } else if (req.auth.role === "expert") {
     const ef = await expertFilter(req);
     if (!ef.expert) return res.json([]);
     filter.expert = ef.expert;
@@ -156,6 +171,7 @@ const cancel = asyncHandler(async (req, res) => {
   booking.timeline.cancelledAt = new Date();
   await booking.save();
   dispatcher.abortDispatch(booking._id);
+  dispatcher.cancelScheduledDispatch(booking._id);
   if (booking.expert) {
     await Expert.updateOne(
       { _id: booking.expert },
@@ -195,7 +211,7 @@ const addAddOn = asyncHandler(async (req, res) => {
     price: svc.price,
     isAddOn: true,
   });
-  booking.recomputePricing();
+  booking.recomputePricing(booking.pricing?.surgeMultiplier || 1, booking.pricing?.discount || 0);
   await booking.save();
 
   notify.emitToRoom(req.app.get("io"), `booking:${bookingRoomId(booking)}`, "booking:addon", {
@@ -209,32 +225,14 @@ const addAddOn = asyncHandler(async (req, res) => {
 const confirmPayment = asyncHandler(async (req, res) => {
   const booking = await loadBooking(req.params.id, { customer: req.auth.sub });
   if (!booking) return res.status(404).json({ error: "not_found" });
-  if (booking.payment.status === "paid") {
-    return res.status(400).json({ error: "already_paid" });
-  }
-
-  booking.payment.status = "paid";
-  booking.payment.providerRef = `test_${Date.now()}`;
-  const io = req.app.get("io");
-  const room = bookingRoomId(booking);
-  const timing = booking.payment.timing || "pay_later";
-
-  if (booking.status === "awaiting_payment" && timing === "pay_now") {
-    booking.status = "created";
-    await booking.save();
-    notify.emitToRoom(io, `booking:${room}`, "booking:payment", {
-      status: "paid",
-      timing,
-    });
-    notify.emitToRoom(io, `booking:${room}`, "booking:status", { status: "created" });
-    setImmediate(() => dispatcher.runDispatch(io, booking._id));
-    return res.json(serializeBooking(booking));
-  }
-
+  const result = await paymentService.capture(booking, req.body.providerRef);
+  booking.payment.status = result.status;
+  booking.payment.providerRef = result.providerRef;
+  booking.payment.method = result.method;
   await booking.save();
-  notify.emitToRoom(io, `booking:${room}`, "booking:payment", {
-    status: "paid",
-    timing,
+  notify.emitToRoom(req.app.get("io"), `booking:${bookingRoomId(booking)}`, "booking:payment", {
+    status: booking.payment.status,
+    method: booking.payment.method,
   });
   res.json(serializeBooking(booking));
 });

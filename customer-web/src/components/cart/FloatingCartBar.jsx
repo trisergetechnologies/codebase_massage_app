@@ -11,22 +11,22 @@ export function FloatingCartBar() {
 
   return (
     <div
-      className="fixed inset-x-4 bottom-4 z-50 animate-slide-up rounded-card bg-forest px-4 text-white shadow-xl md:hidden"
-      style={{ paddingBottom: "max(0px, env(safe-area-inset-bottom))", height: 60 }}
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-white/95 px-4 py-3 shadow-[0_-8px_32px_rgba(15,20,25,0.08)] backdrop-blur-xl lg:hidden"
+      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
     >
-      <div className="flex h-[60px] items-center justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <ShoppingBag size={20} className="shrink-0" />
-          <p className="truncate type-body font-semibold">
-            {sessions} · ₹{totals.price.toLocaleString("en-IN")}
+      <div className="mx-auto flex max-w-lg items-center justify-between gap-4">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-ink">
+            {label}
           </p>
+          <p className="text-xs text-muted">Tap to review & book</p>
         </div>
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex shrink-0 items-center gap-1 type-button-sm font-semibold text-white"
+          className="shrink-0 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-accent-hover hover:shadow-md active:scale-[0.98]"
         >
-          Book now <ArrowRight size={16} />
+          View cart · ₹{totals.price.toLocaleString("en-IN")}
         </button>
       </div>
     </div>

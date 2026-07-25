@@ -64,20 +64,19 @@ export function ServicesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
+    <div className="min-h-screen bg-premium-gradient">
       <div className="mx-auto max-w-5xl px-4 pt-10 sm:px-6 sm:pt-14 lg:px-8 lg:pt-16">
-        {/* Hero */}
         <header className="max-w-2xl">
-          <h1 className="text-[1.75rem] font-semibold leading-[1.15] tracking-tight text-ink sm:text-4xl sm:leading-[1.1]">
+          <p className="eyebrow">Book a session</p>
+          <h1 className="mt-3 font-display text-[1.85rem] font-extrabold leading-[1.12] tracking-tight text-ink sm:text-4xl sm:leading-[1.08]">
             What would you like relief from today?
           </h1>
-          <p className="mt-3 text-base text-sub sm:text-lg">
-            Verified experts at your door — book in minutes.
+          <p className="mt-4 text-base leading-7 text-sub sm:text-lg">
+            Verified experts at your door — transparent pricing, professional service.
           </p>
         </header>
 
-        {/* Trust strip */}
-        <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-y border-border/60 py-4 sm:gap-x-10">
+        <ul className="mt-8 flex flex-wrap gap-x-6 gap-y-2 rounded-2xl border border-border/60 bg-white/80 px-5 py-4 shadow-xs sm:gap-x-10">
           {TRUST_ITEMS.map((item) => (
             <li key={item} className="flex items-center gap-2 text-sm text-sub">
               <span className="text-accent" aria-hidden>

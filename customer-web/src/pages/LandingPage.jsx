@@ -21,12 +21,17 @@ export function LandingPage() {
 
   return (
     <div className="pb-20 md:pb-0">
-      <LandingHero />
-      <LandingServices />
-      <LandingProof />
-      <LandingProcess />
-      <LandingFaq />
-      <LandingFinalCta />
+      <HeroSection />
+      <PainPointsSection />
+      
+      <ServicesSection />
+      <HowItWorksSection />
+      <WhySection />
+      <SafetySection />
+      <TestimonialsSection />
+      <ExpertsSection />
+      <FaqSection />
+      <FinalCtaSection />
       <LandingStickyCta />
     </div>
   );

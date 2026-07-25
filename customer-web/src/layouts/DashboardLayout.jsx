@@ -55,9 +55,7 @@ function BottomNav() {
   return (
 
     <nav
-
-      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
-
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/80 bg-white/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_24px_rgba(15,20,25,0.06)] backdrop-blur-lg lg:hidden"
       aria-label="Account menu"
 
     >
@@ -119,21 +117,19 @@ function BottomNav() {
 function DesktopSidebar({ user, onSignOut, onBook }) {
 
   return (
-
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[280px] flex-col border-r border-border bg-surface lg:flex">
-
-      <div className="px-6 py-6">
-
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] flex-col border-r border-border/80 bg-white shadow-sm lg:flex">
+      <div className="border-b border-border/80 px-6 py-6">
         <NavLink to="/services" className="flex items-center gap-3 no-underline">
-
-          <span className="grid size-10 place-items-center rounded-xl bg-accent text-sm font-bold text-white">
-
+          <span className="grid size-10 place-items-center rounded-xl bg-accent text-sm font-bold text-white shadow-sm ring-1 ring-accent/20">
             R
 
           </span>
-
-          <p className="truncate text-sm font-semibold text-ink">Relief, Delivered</p>
-
+          <div className="min-w-0">
+            <p className="truncate font-display text-sm font-bold tracking-tight text-ink">
+              Reliefhai
+            </p>
+            <p className="text-xs text-muted">Your account</p>
+          </div>
         </NavLink>
 
       </div>
@@ -303,9 +299,7 @@ export function DashboardLayout() {
 
 
   return (
-
-    <div className="min-h-screen bg-canvas lg:bg-canvas">
-
+    <div className="min-h-screen bg-surface lg:bg-gradient-to-br lg:from-surface lg:via-white lg:to-surface">
       <DesktopSidebar user={user} onSignOut={signOut} onBook={onBook} />
 
 
@@ -327,9 +321,15 @@ export function DashboardLayout() {
           }`}
 
         >
-
-          <Outlet />
-
+          <div
+            className={
+              isOrderDetail
+                ? "lg:p-0"
+                : "lg:rounded-3xl lg:bg-white lg:p-8 lg:shadow-premium lg:ring-1 lg:ring-border/50"
+            }
+          >
+            <Outlet />
+          </div>
         </main>
 
       </div>

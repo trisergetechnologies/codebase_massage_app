@@ -7,17 +7,21 @@
  * once you're ready to ship to TestFlight / Play.
  */
 
+const env = require("../config/env");
+
 async function expoPush(token, title, body, data = {}) {
   if (!token) return;
   const payload = { to: token, sound: "default", title, body, data };
   try {
-    // Uncomment when you want real pushes:
-    // await fetch("https://exp.host/--/api/v2/push/send", {
-    //   method: "POST",
-    //   headers: { "content-type": "application/json" },
-    //   body: JSON.stringify(payload),
-    // });
-    console.log("[notify] (stubbed) push ->", token, title, body);
+    if (env.EXPO_PUSH_ENABLED) {
+      await fetch("https://exp.host/--/api/v2/push/send", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } else {
+      console.log("[notify] (stubbed) push ->", token, title, body);
+    }
   } catch (err) {
     console.warn("[notify] push failed", err.message);
   }

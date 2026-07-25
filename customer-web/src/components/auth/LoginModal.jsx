@@ -160,7 +160,7 @@ export function LoginModal() {
     <Portal>
       <button
         type="button"
-        className="fixed inset-0 z-[210] bg-ink/55 backdrop-blur-[2px]"
+        className="fixed inset-0 z-[210] bg-forest/40 backdrop-blur-sm"
         aria-label="Close sign in"
         onClick={closeLogin}
       />
@@ -171,7 +171,7 @@ export function LoginModal() {
         aria-labelledby="login-modal-title"
       >
         <div
-          className="pointer-events-auto flex max-h-[min(92dvh,100%)] w-full flex-col overflow-hidden rounded-t-2xl border border-white/40 border-b-0 bg-white/90 shadow-2xl backdrop-blur-xl sm:max-h-[90dvh] sm:max-w-[400px] sm:rounded-2xl sm:border-b"
+          className="pointer-events-auto flex max-h-[min(92dvh,100%)] w-full flex-col overflow-hidden rounded-t-3xl border border-border/60 border-b-0 bg-white shadow-premium-lg sm:max-h-[90dvh] sm:max-w-[420px] sm:rounded-3xl sm:border-b"
           style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
         >
           <div className="shrink-0 overflow-y-auto overscroll-contain p-5 sm:p-7">

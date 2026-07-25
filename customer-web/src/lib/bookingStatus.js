@@ -1,16 +1,15 @@
 import { cancelReasonMessage, journeyMessages } from "./messages";
-import { LIVE_TRACKING_STATUSES, OPEN_BOOKING_STATUSES } from "./bookingJourney";
+import { OPEN_BOOKING_STATUSES } from "./bookingJourney";
 
-export const ACTIVE_STATUSES = OPEN_BOOKING_STATUSES;
-export { LIVE_TRACKING_STATUSES, OPEN_BOOKING_STATUSES };
+export const ACTIVE_STATUSES = ["created", "scheduled", "searching", "assigned", "in_progress"];
 export const COMPLETED_STATUSES = ["completed"];
 export const CANCELLED_STATUSES = ["cancelled"];
 
 export function formatStatus(status) {
   const map = {
-    awaiting_payment: "Pay to start",
-    created: "Confirming…",
-    searching: "Finding expert…",
+    created: "Confirmed",
+    scheduled: "Scheduled",
+    searching: "Finding expert",
     assigned: "Expert assigned",
     in_progress: "Session running",
     completed: "Done",

@@ -3,7 +3,7 @@ import { MapPin, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import { userService } from "../../services/userService";
-import { bookingService } from "../../services/bookingService";
+import { bookingService, couponService } from "../../services/bookingService";
 import { authService } from "../../services/authService";
 import { friendlyError, toastMessages } from "../../lib/messages";
 import { LocationCapture } from "../address/LocationCapture";
@@ -20,7 +20,10 @@ export function AddressBookingModal({ open, serviceIds, serviceCount = 0, orderT
   const [selectedId, setSelectedId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [paymentTiming, setPaymentTiming] = useState("pay_later");
+  const [bookNow, setBookNow] = useState(true);
+  const [scheduledAt, setScheduledAt] = useState("");
+  const [couponCode, setCouponCode] = useState("");
+  const [couponDiscount, setCouponDiscount] = useState(0);
   const [form, setForm] = useState({
     label: "Home",
     line1: "",
@@ -39,7 +42,6 @@ export function AddressBookingModal({ open, serviceIds, serviceCount = 0, orderT
     const def = addresses.find((a) => a.isDefault) || addresses[0];
     setSelectedId(def?.id || "");
     setShowForm(addresses.length === 0);
-    setPaymentTiming("pay_later");
   }, [open, addresses]);
 
   async function saveAddress() {
@@ -64,28 +66,41 @@ export function AddressBookingModal({ open, serviceIds, serviceCount = 0, orderT
     }
   }
 
+  async function applyCoupon() {
+    if (!couponCode.trim()) return;
+    try {
+      const res = await couponService.validate(couponCode.trim());
+      if (res.valid) {
+        setCouponDiscount(res.discount);
+        toast.success(`Coupon applied — ₹${res.discount} off`);
+      } else {
+        setCouponDiscount(0);
+        toast.error("Invalid coupon code");
+      }
+    } catch (e) {
+      toast.error(friendlyError(e.message));
+    }
+  }
+
   async function confirmBooking() {
     const addr = addresses.find((a) => a.id === selectedId);
     if (!addr?.lat || !addr?.lng) {
       return toast.error(friendlyError("location_required"));
     }
-    const isPayNow = paymentTiming === "pay_now";
-    const loadId = isPayNow ? null : toast.loading(toastMessages.findingExperts);
+    const loadId = toast.loading(toastMessages.findingExperts);
     setLoading(true);
     try {
-      const booking = await bookingService.create(
-        serviceIds,
-        {
-          lat: addr.lat,
-          lng: addr.lng,
-          address: [addr.line1, addr.line2, addr.city, addr.pincode].filter(Boolean).join(", "),
-        },
-        paymentTiming
-      );
-      if (loadId) toast.dismiss(loadId);
-      toast.success(
-        isPayNow ? toastMessages.bookingPayNowToast : toastMessages.bookingConfirmed
-      );
+      const options = { couponCode: couponDiscount ? couponCode.trim() : "" };
+      if (!bookNow && scheduledAt) {
+        options.scheduledFor = new Date(scheduledAt).toISOString();
+      }
+      const booking = await bookingService.create(serviceIds, {
+        lat: addr.lat,
+        lng: addr.lng,
+        address: [addr.line1, addr.line2, addr.city, addr.pincode].filter(Boolean).join(", "),
+      }, options);
+      toast.dismiss(loadId);
+      toast.success(toastMessages.bookingConfirmed);
       onBooked?.(booking);
       onClose?.();
     } catch (e) {
@@ -179,6 +194,59 @@ export function AddressBookingModal({ open, serviceIds, serviceCount = 0, orderT
             </div>
           )}
 
+          {!showForm && addresses.length > 0 && (
+            <div className="mt-6 space-y-4 border-t border-border pt-4">
+              <p className="text-sm font-medium text-ink">When</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setBookNow(true)}
+                  className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium ${
+                    bookNow ? "border-accent bg-accent-soft text-accent" : "border-border text-sub"
+                  }`}
+                >
+                  Book now
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBookNow(false)}
+                  className={`flex-1 rounded-xl border px-3 py-2 text-sm font-medium ${
+                    !bookNow ? "border-accent bg-accent-soft text-accent" : "border-border text-sub"
+                  }`}
+                >
+                  Schedule
+                </button>
+              </div>
+              {!bookNow && (
+                <input
+                  type="datetime-local"
+                  value={scheduledAt}
+                  onChange={(e) => setScheduledAt(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
+                  className="w-full rounded-xl border border-border px-3 py-2 text-sm text-ink"
+                />
+              )}
+              <div>
+                <p className="text-sm font-medium text-ink">Coupon</p>
+                <div className="mt-2 flex gap-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                    placeholder="e.g. WELCOME10"
+                    className="flex-1 rounded-xl border border-border px-3 py-2 text-sm uppercase"
+                  />
+                  <Button variant="secondary" onClick={applyCoupon} type="button">
+                    Apply
+                  </Button>
+                </div>
+                {couponDiscount > 0 && (
+                  <p className="mt-1 text-xs text-accent">₹{couponDiscount} discount will apply</p>
+                )}
+              </div>
+            </div>
+          )}
+
           {!showForm && (
             <button
               type="button"
@@ -212,53 +280,8 @@ export function AddressBookingModal({ open, serviceIds, serviceCount = 0, orderT
                 </p>
               </div>
             ) : null}
-            <p className="text-sm font-semibold text-ink">When would you like to pay?</p>
-              <label
-                className={`flex cursor-pointer gap-3 rounded-xl border p-4 transition ${
-                  paymentTiming === "pay_now"
-                    ? "border-accent bg-accent-soft"
-                    : "border-border hover:border-accent/30"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentTiming"
-                  value="pay_now"
-                  checked={paymentTiming === "pay_now"}
-                  onChange={() => setPaymentTiming("pay_now")}
-                  className="mt-1 accent-accent"
-                />
-                <span>
-                  <span className="block font-semibold text-ink">Pay now</span>
-                  <span className="mt-0.5 block text-sm text-sub">
-                    Pay to confirm and find your expert
-                  </span>
-                </span>
-              </label>
-              <label
-                className={`flex cursor-pointer gap-3 rounded-xl border p-4 transition ${
-                  paymentTiming === "pay_later"
-                    ? "border-accent bg-accent-soft"
-                    : "border-border hover:border-accent/30"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="paymentTiming"
-                  value="pay_later"
-                  checked={paymentTiming === "pay_later"}
-                  onChange={() => setPaymentTiming("pay_later")}
-                  className="mt-1 accent-accent"
-                />
-                <span>
-                  <span className="block font-semibold text-ink">Pay later</span>
-                  <span className="mt-0.5 block text-sm text-sub">
-                    Find expert first, pay anytime before session ends
-                  </span>
-                </span>
-              </label>
-            </div>
-          )}
+          </div>
+        )}
         </div>
 
         {!showForm && addresses.length > 0 && (
@@ -269,7 +292,7 @@ export function AddressBookingModal({ open, serviceIds, serviceCount = 0, orderT
               onClick={confirmBooking}
               disabled={loading || !selectedId}
             >
-              {paymentTiming === "pay_now" ? "Continue to payment" : "Confirm & find expert"}
+              Confirm &amp; find expert
             </Button>
           </div>
         )}

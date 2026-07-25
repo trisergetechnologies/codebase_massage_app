@@ -1,18 +1,23 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import { api } from "@/lib/api";
 
-export const dynamic = "force-dynamic";
+export default function DashboardPage() {
+  const [services, setServices] = useState([]);
+  const [experts, setExperts] = useState([]);
+  const [error, setError] = useState("");
 
-async function loadDashboard() {
-  try {
-    const [services, experts] = await Promise.all([api.listServices(), api.listExperts()]);
-    return { services, experts };
-  } catch (err) {
-    return { services: [], experts: [], error: err.message };
-  }
-}
+  useEffect(() => {
+    Promise.all([api.listServices(), api.listExperts()])
+      .then(([s, e]) => {
+        setServices(s);
+        setExperts(e);
+      })
+      .catch((err) => setError(err.message));
+  }, []);
 
-export default async function DashboardPage() {
-  const { services, experts, error } = await loadDashboard();
   const online = experts.filter((e) => e.status === "online").length;
   const onJob = experts.filter((e) => e.status === "on_job").length;
 
@@ -21,7 +26,7 @@ export default async function DashboardPage() {
       <h1 style={{ marginTop: 0 }}>Dashboard</h1>
       {error && (
         <div className="card" style={{ borderColor: "var(--danger)", color: "var(--danger)" }}>
-          Backend unreachable: {error}
+          {error}
         </div>
       )}
       <div className="kpi-grid">
@@ -46,9 +51,10 @@ export default async function DashboardPage() {
       <div className="card" style={{ marginTop: 24 }}>
         <h2>Quick links</h2>
         <p style={{ color: "var(--muted)" }}>
-          Manage <a href="/services" style={{ color: "var(--accent)" }}>services</a>, view{" "}
-          <a href="/experts" style={{ color: "var(--accent)" }}>experts</a>, and watch live{" "}
-          <a href="/bookings" style={{ color: "var(--accent)" }}>bookings</a>.
+          Manage <Link href="/services" style={{ color: "var(--accent)" }}>services</Link>, view{" "}
+          <Link href="/experts" style={{ color: "var(--accent)" }}>experts</Link>, watch{" "}
+          <Link href="/bookings" style={{ color: "var(--accent)" }}>bookings</Link>, and read{" "}
+          <Link href="/reviews" style={{ color: "var(--accent)" }}>reviews</Link>.
         </p>
       </div>
     </div>
