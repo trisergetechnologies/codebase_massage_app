@@ -1,16 +1,17 @@
+/**
+ * Featured row removed from Services page in favour of a single image grid
+ * with Popular badges. Kept as a thin wrapper for any future reuse.
+ */
 import { ServiceBookingCard } from "./ServiceBookingCard";
 
 export function FeaturedSessions({ services, onAdd }) {
-  if (!services.length) return null;
+  if (!services?.length) return null;
 
   return (
-    <section className="mt-12 sm:mt-14">
-      <h2 className="text-sm font-semibold text-ink">Popular right now</h2>
-      <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        {services.map((s) => (
-          <ServiceBookingCard key={s.id} service={s} onAdd={onAdd} featured />
-        ))}
-      </div>
-    </section>
+    <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+      {services.map((s) => (
+        <ServiceBookingCard key={s.id} service={s} onAdd={onAdd} />
+      ))}
+    </div>
   );
 }

@@ -83,11 +83,26 @@ export const brand = {
     "Deliver a consistent experience",
   ],
   customerPromise: [
-    "Clear pricing",
-    "Professional service",
-    "Verified experts",
-    "Reliable arrival estimates",
-    "Responsive support",
+    {
+      title: "Clear pricing",
+      body: "Know the session cost before you book — no surprise fees at the door.",
+    },
+    {
+      title: "Professional service",
+      body: "Trained experts who follow defined service standards on every visit.",
+    },
+    {
+      title: "Verified experts",
+      body: "Only active after training and verification checks are complete.",
+    },
+    {
+      title: "Reliable arrival estimates",
+      body: "Real-time matching and tracking so you know who’s coming and when.",
+    },
+    {
+      title: "Responsive support",
+      body: "Help when something doesn’t go as planned — we’re accountable to you.",
+    },
   ],
   principles: ["Fast", "Affordable", "Reliable", "Safe", "Respectful"],
   vision: "To become the most trusted hyperlocal wellness network for quick physical relief.",

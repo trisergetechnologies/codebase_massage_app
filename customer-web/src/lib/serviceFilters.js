@@ -111,15 +111,19 @@ export function filterServices(services, { bodyCategory, feelingId, query }) {
   return services.filter((s) => {
     if (!body.match(s)) return false;
     if (feeling && !feeling.match(s)) return false;
-    if (
-      q &&
-      !s.name?.toLowerCase().includes(q) &&
-      !(s.description || "").toLowerCase().includes(q)
-    ) {
-      return false;
+    if (q) {
+      const tags = getBenefitTags(s).join(" ").toLowerCase();
+      const cats = (s.categories || []).join(" ").toLowerCase();
+      const haystack = `${s.name || ""} ${s.description || ""} ${tags} ${cats}`.toLowerCase();
+      if (!haystack.includes(q)) return false;
     }
     return true;
   });
+}
+
+export function isPopularService(service) {
+  const slug = service?.slug || service?.id;
+  return POPULAR_SLUGS.includes(slug);
 }
 
 export function getPopularServices(services) {

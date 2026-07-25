@@ -24,14 +24,10 @@ export function LandingPage() {
     <div className="pb-20 md:pb-0">
       <HeroSection />
       <PainPointsSection />
-      
       <ServicesSection />
       <HowItWorksSection />
-      <WhySection />
       <SafetySection />
-      <TestimonialsSection />
       <ExpertsSection />
-      <FaqSection />
       <FinalCtaSection />
       <LandingStickyCta />
     </div>

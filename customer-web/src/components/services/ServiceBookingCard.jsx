@@ -1,64 +1,77 @@
 import { Link } from "react-router-dom";
-import { Clock } from "lucide-react";
-import { getBenefitTags } from "../../lib/serviceFilters";
+import { ArrowRight, Clock } from "lucide-react";
+import { getBenefitTags, isPopularService } from "../../lib/serviceFilters";
+import { getServiceImage } from "../../lib/serviceImages";
 
-export function ServiceBookingCard({ service, onAdd, featured = false }) {
+export function ServiceBookingCard({ service, onAdd }) {
   const tags = getBenefitTags(service);
   const detailPath = `/services/${service.id}`;
+  const image = getServiceImage(service);
+  const popular = isPopularService(service);
 
   return (
-    <article
-      className={`group relative flex flex-col overflow-hidden rounded-2xl bg-white transition-all duration-300 ${
-        featured
-          ? "p-7 shadow-premium ring-1 ring-border/80 hover:shadow-premium-lg"
-          : "p-6 shadow-sm ring-1 ring-border/70 hover:-translate-y-1 hover:shadow-premium hover:ring-accent/20"
-      }`}
-    >
-      <div
-        className="pointer-events-none absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent/0 via-accent/40 to-accent/0 opacity-0 transition group-hover:opacity-100"
-        aria-hidden
-      />
-
+    <article className="group flex flex-col overflow-hidden rounded-2xl border border-border/80 bg-white transition duration-200 hover:border-accent">
       <Link
         to={detailPath}
-        className="block min-w-0 outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded-lg"
+        className="relative block aspect-[4/3] overflow-hidden bg-surface outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
       >
-        <h3
-          className={`font-display font-bold tracking-tight text-ink transition-colors group-hover:text-accent ${
-            featured ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
-          }`}
+        <img
+          src={image}
+          alt={service.name}
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+          loading="lazy"
+          decoding="async"
+        />
+        {popular && (
+          <span className="absolute left-2.5 top-2.5 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent shadow-xs ring-1 ring-accent/15">
+            Popular
+          </span>
+        )}
+      </Link>
+
+      <div className="flex flex-1 flex-col p-3.5 sm:p-4">
+        <Link
+          to={detailPath}
+          className="flex items-start justify-between gap-2 outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 rounded-md"
         >
-          {service.name}
-        </h3>
-        <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-sub">
-          <Clock size={15} className="text-muted" />
-          {service.durationMin} min session
+          <h3 className="font-display text-sm font-bold leading-snug tracking-tight text-ink transition-colors group-hover:text-accent sm:text-[15px]">
+            {service.name}
+          </h3>
+          <ArrowRight
+            size={16}
+            className="mt-0.5 shrink-0 text-ink transition group-hover:text-accent"
+          />
+        </Link>
+
+        <p className="mt-2 inline-flex items-center gap-1 text-xs text-sub">
+          <Clock size={12} className="text-muted" />
+          {service.durationMin} min
         </p>
-        <p className={`mt-4 font-display font-bold text-ink ${featured ? "text-2xl" : "text-xl"}`}>
+
+        <p className="mt-1.5 font-display text-base font-bold text-ink sm:text-lg">
           ₹{service.price?.toLocaleString("en-IN")}
-          <span className="ml-1 text-sm font-normal text-muted">all-in</span>
+          <span className="ml-1 text-xs font-normal text-muted">all-in</span>
         </p>
-        <div className="mt-4 flex flex-wrap gap-2">
+
+        <div className="mt-2.5 flex flex-wrap gap-1.5">
           {tags.map((tag) => (
             <span
               key={tag}
-              className="rounded-lg bg-surface px-2.5 py-1 text-xs font-medium text-sub ring-1 ring-border/50"
+              className="rounded-md bg-surface px-2 py-0.5 text-[10px] font-medium text-sub ring-1 ring-border/50"
             >
               {tag}
             </span>
           ))}
         </div>
-      </Link>
 
-      <button
-        type="button"
-        onClick={() => onAdd(service)}
-        className={`mt-6 w-full rounded-xl bg-accent font-semibold text-white shadow-sm transition hover:bg-accent-hover hover:shadow-md active:scale-[0.99] ${
-          featured ? "min-h-12 text-base" : "min-h-11 text-sm"
-        }`}
-      >
-        Add to cart
-      </button>
+        <button
+          type="button"
+          onClick={() => onAdd(service)}
+          className="mt-3.5 w-full rounded-xl bg-accent py-2.5 text-sm font-semibold text-white transition hover:bg-accent-hover active:scale-[0.99]"
+        >
+          Add to cart
+        </button>
+      </div>
     </article>
   );
 }

@@ -43,7 +43,7 @@ export function TestimonialsSection() {
                 <p className="mt-1 text-sm leading-6 text-muted">
                   {brand.whyChoose.find((w) =>
                     w.title.toLowerCase().includes(principle.toLowerCase())
-                  )?.body || brand.customerPromise[0]}
+                  )?.body || brand.customerPromise[0].body}
                 </p>
               </div>
             </div>

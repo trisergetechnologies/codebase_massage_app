@@ -85,7 +85,7 @@ export function Nav() {
               R
             </span>
             <span className="hidden truncate font-display text-[15px] font-bold tracking-tight sm:inline">
-              Reliefhai
+              ReliefHai
             </span>
           </Link>
 
