@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getAdminToken, setAdminToken } from "@/lib/api";
+import { getAdminToken, logoutAdmin } from "@/lib/api";
 
 export function AdminShell({ children }) {
   const pathname = usePathname();
@@ -20,8 +20,8 @@ export function AdminShell({ children }) {
     if (!getAdminToken()) router.replace("/login");
   }, [ready, isLogin, router]);
 
-  function logout() {
-    setAdminToken(null);
+  async function logout() {
+    await logoutAdmin();
     router.replace("/login");
   }
 

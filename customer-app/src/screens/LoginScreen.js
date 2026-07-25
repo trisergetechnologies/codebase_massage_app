@@ -6,7 +6,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather } from "@expo/vector-icons";
 
 import { Text, Button, TextField, Card } from "../ui";
-import { api, setToken } from "../api";
+import { api, setTokens } from "../api";
 import { palette, spacing, radii, shadows } from "../theme/tokens";
 
 const HERO_URI =
@@ -30,8 +30,8 @@ export default function LoginScreen({ navigation }) {
     if (code.length !== 6) return Alert.alert("Enter 6-digit code");
     setLoading(true);
     try {
-      const { token } = await api.verifyOtp(phone, code, "customer");
-      await setToken(token);
+      const res = await api.verifyOtp(phone, code, "customer");
+      await setTokens(res.accessToken || res.token, res.refreshToken);
       navigation.replace("Home");
     } catch (e) { Alert.alert("Error", e.message); }
     finally { setLoading(false); }

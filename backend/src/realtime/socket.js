@@ -1,5 +1,5 @@
 const { Server } = require("socket.io");
-const { verifyToken } = require("../middleware/auth");
+const { verifyAccessToken } = require("../middleware/auth");
 const Expert = require("../models/Expert");
 const dispatcher = require("../services/dispatcher");
 const geo = require("../services/geo");
@@ -41,7 +41,7 @@ function setupSocket(server, corsOrigins) {
     try {
       const token = socket.handshake.auth?.token;
       if (!token) return next(new Error("unauthorized"));
-      const decoded = verifyToken(token);
+      const decoded = verifyAccessToken(token);
       socket.user = decoded;
       next();
     } catch (err) {

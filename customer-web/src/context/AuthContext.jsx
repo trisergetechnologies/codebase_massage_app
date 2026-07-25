@@ -1,5 +1,10 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { setToken as persistToken, getToken } from "../services/apiClient";
+import {
+  setTokens,
+  getAccessToken,
+  logoutRemote,
+  onAuthFailure,
+} from "../services/apiClient";
 import { authService } from "../services/authService";
 
 const AuthContext = createContext(null);
@@ -9,7 +14,7 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   const bootstrap = useCallback(async () => {
-    const token = getToken();
+    const token = getAccessToken();
     if (!token) {
       setUser(null);
       setLoading(false);
@@ -18,13 +23,13 @@ export function AuthProvider({ children }) {
     try {
       const { principal, needsProfile } = await authService.me();
       if (needsProfile) {
-        persistToken(null);
+        await logoutRemote();
         setUser(null);
       } else {
         setUser(principal);
       }
     } catch {
-      persistToken(null);
+      await logoutRemote();
       setUser(null);
     } finally {
       setLoading(false);
@@ -35,8 +40,14 @@ export function AuthProvider({ children }) {
     bootstrap();
   }, [bootstrap]);
 
-  const login = useCallback((token, principal) => {
-    persistToken(token);
+  useEffect(() => {
+    return onAuthFailure(() => {
+      setUser(null);
+    });
+  }, []);
+
+  const login = useCallback((accessToken, principal, refreshToken) => {
+    setTokens(accessToken, refreshToken || null);
     setUser(principal);
   }, []);
 
@@ -44,8 +55,8 @@ export function AuthProvider({ children }) {
     setUser(principal);
   }, []);
 
-  const logout = useCallback(() => {
-    persistToken(null);
+  const logout = useCallback(async () => {
+    await logoutRemote();
     setUser(null);
   }, []);
 
@@ -59,7 +70,7 @@ export function AuthProvider({ children }) {
       updateUser,
       refresh: bootstrap,
     }),
-    [user, loading, login, logout, bootstrap]
+    [user, loading, login, logout, updateUser, bootstrap]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

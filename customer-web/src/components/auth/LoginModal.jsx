@@ -110,7 +110,7 @@ export function LoginModal() {
         setStep("profile");
         return;
       }
-      login(res.token, res.principal);
+      login(res.accessToken || res.token, res.principal, res.refreshToken);
       finishAuth();
     } catch (err) {
       setError(friendlyError(err.message));
@@ -133,7 +133,7 @@ export function LoginModal() {
         gender,
         dateOfBirth,
       });
-      login(res.token, res.principal);
+      login(res.accessToken || res.token, res.principal, res.refreshToken);
       finishAuth();
     } catch (err) {
       setError(friendlyError(err.message));

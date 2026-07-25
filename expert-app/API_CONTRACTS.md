@@ -2,7 +2,8 @@
 
 Base URL: `expert-app/src/config.js` → `/api`
 
-Auth: `Authorization: Bearer <jwt>` (expert role). JWT `sub` is internal Mongo id.
+Auth: `Authorization: Bearer <accessToken>` (expert role). Access JWT `sub` is internal Mongo id.
+Access tokens expire quickly (~15m); clients refresh via `refreshToken`.
 
 ---
 
@@ -21,11 +22,35 @@ Response: `{ "ok": true }` (dev: any 6-digit code works)
 Response:
 ```json
 {
+  "accessToken": "jwt…",
+  "refreshToken": "opaque…",
+  "expiresIn": 900,
+  "tokenType": "Bearer",
   "token": "jwt…",
   "role": "expert",
   "principal": { "id": "uuid", "name": "…", "phone": "…", "status": "offline", "trainingStatus": "pending", … }
 }
 ```
+(`token` is a legacy alias of `accessToken`.)
+
+### `POST /auth/refresh`
+```json
+{ "refreshToken": "opaque…" }
+```
+Response: same shape as login token fields (`accessToken`, `refreshToken`, `expiresIn`, …).
+Errors: `401 { "error": "invalid_refresh_token" }` (also on refresh-token reuse after rotation).
+
+### `POST /auth/logout`
+```json
+{ "refreshToken": "opaque…" }
+```
+Response: `{ "ok": true }` (idempotent).
+
+### Auth errors on protected routes
+- `401 missing_token`
+- `401 token_expired` — client should refresh then retry once
+- `401 invalid_token` — do not refresh; force re-login
+- `403 wrong_role`
 
 ---
 

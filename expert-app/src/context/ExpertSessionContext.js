@@ -1,6 +1,6 @@
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { Alert } from "react-native";
-import { setToken, getToken } from "../services/apiClient";
+import { setToken, getToken, onAuthFailure, logoutRemote } from "../services/apiClient";
 import { expertService } from "../services/expertService";
 import {
   ensureLocationPermission,
@@ -12,7 +12,19 @@ import { registerPushToken } from "../services/pushService";
 
 const ExpertSessionContext = createContext(null);
 
-export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 }) {
+function isSessionEndingError(e) {
+  return (
+    e?.status === 403 ||
+    e?.status === 404 ||
+    e?.code === "invalid_token" ||
+    e?.code === "missing_token" ||
+    e?.code === "wrong_role" ||
+    e?.code === "invalid_refresh_token" ||
+    (e?.status === 401 && e?.code !== "token_expired")
+  );
+}
+
+export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0, onSessionEnded }) {
   const [me, setMe] = useState(null);
   const [loading, setLoading] = useState(true);
   const [offer, setOffer] = useState(null);
@@ -20,6 +32,7 @@ export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 
   const [goingOnline, setGoingOnline] = useState(false);
   const socketRef = useRef(null);
   const activeBookingRef = useRef(null);
+  const endingSessionRef = useRef(false);
 
   useEffect(() => {
     activeBookingRef.current = me?.activeBooking || null;
@@ -44,7 +57,7 @@ export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 
         const pending = await expertService.pendingOffer();
         if (pending && !cancelled) handleOffer(pending);
       } catch {
-        /* ignore poll errors */
+        /* ignore poll errors — auth failures are handled via onAuthFailure */
       }
     };
     poll();
@@ -63,19 +76,42 @@ export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 
     setMe(null);
   }, []);
 
+  const forceLogout = useCallback(async () => {
+    if (endingSessionRef.current) return;
+    endingSessionRef.current = true;
+    try {
+      stopLocationPolling();
+      disconnectSocket();
+      socketRef.current = null;
+      // Token may already be cleared by apiClient; ensure local state matches.
+      await setToken(null);
+      setMe(null);
+      setOffer(null);
+      onSessionEnded?.();
+      navigationRef?.current?.reset({ index: 0, routes: [{ name: "Login" }] });
+    } finally {
+      endingSessionRef.current = false;
+    }
+  }, [navigationRef, onSessionEnded]);
+
+  useEffect(() => {
+    return onAuthFailure(() => {
+      forceLogout();
+    });
+  }, [forceLogout]);
+
   const refreshMe = useCallback(async () => {
     try {
       const profile = await expertService.me();
       setMe(profile);
       return profile;
     } catch (e) {
-      if (e.status === 404) {
-        await clearSession();
-        navigationRef?.current?.reset({ index: 0, routes: [{ name: "Login" }] });
+      if (isSessionEndingError(e)) {
+        await forceLogout();
       }
       throw e;
     }
-  }, [clearSession, navigationRef]);
+  }, [forceLogout]);
 
   async function connectRealtime() {
     disconnectSocket();
@@ -147,7 +183,8 @@ export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 
         await connectRealtime().catch(() => {});
         registerPushToken().catch(() => {});
       } catch (e) {
-        if (e.status !== 404) {
+        // Auth / missing expert → already forced to Login; only alert other failures.
+        if (!isSessionEndingError(e)) {
           Alert.alert("Could not load profile", e.message);
         }
       } finally {
@@ -185,7 +222,9 @@ export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 
         setMe(updated);
       }
     } catch (e) {
-      Alert.alert("Error", e.message);
+      if (!isSessionEndingError(e)) {
+        Alert.alert("Error", e.message);
+      }
     } finally {
       setGoingOnline(false);
     }
@@ -199,7 +238,9 @@ export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 
     if (socketRef.current?.connected) {
       socketRef.current.emit("dispatch:respond", { bookingId, accepted });
     }
-    send.catch((e) => Alert.alert("Error", e.message));
+    send.catch((e) => {
+      if (!isSessionEndingError(e)) Alert.alert("Error", e.message);
+    });
     if (accepted) {
       navigationRef?.current?.navigate("ActiveOrder", { bookingId });
       refreshMe();
@@ -207,7 +248,13 @@ export function ExpertSessionProvider({ children, navigationRef, sessionKey = 0 
   }
 
   async function logout() {
-    await clearSession();
+    stopLocationPolling();
+    disconnectSocket();
+    socketRef.current = null;
+    await logoutRemote();
+    setMe(null);
+    setOffer(null);
+    onSessionEnded?.();
     navigationRef?.current?.reset({ index: 0, routes: [{ name: "Login" }] });
   }
 

@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { authService } from "../services/authService";
-import { setToken } from "../services/apiClient";
+import { setTokens } from "../services/apiClient";
 import { colors, spacing, radii } from "../theme/tokens";
 import { AppText } from "../components/ui/AppText";
 import { PrimaryButton } from "../components/ui/PrimaryButton";
@@ -37,7 +37,7 @@ export default function LoginScreen({ onAuthed }) {
     setBusy(true);
     try {
       const res = await authService.verifyOtp(phone, code, name);
-      await setToken(res.token);
+      await setTokens(res.accessToken || res.token, res.refreshToken);
       onAuthed?.();
     } catch (e) {
       Alert.alert("Verification failed", e.message);

@@ -1,7 +1,7 @@
 // DEV ONLY — ngrok tunnel to local backend (Metro reload picks this up; no APK rebuild).
 // Update when ngrok URL changes. Remove before next EAS build / use app.json extra.apiBase.
 // export const API_BASE = "https://cake-dropper-courier.ngrok-free.dev";
-export const API_BASE = "http://192.168.1.36:4000";
+export const API_BASE = "http://192.168.1.35:4000";
 
 // --- restore for production build ---
 // import Constants from "expo-constants";

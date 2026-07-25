@@ -14,6 +14,8 @@ const { requireAuth } = require("../middleware/auth");
 router.post("/auth/request-otp", auth.requestOtp);
 router.post("/auth/verify-otp", auth.verifyOtp);
 router.post("/auth/complete-profile", auth.completeProfile);
+router.post("/auth/refresh", auth.refresh);
+router.post("/auth/logout", auth.logout);
 router.get("/services", services.list);
 router.get("/services/:id/reviews", services.reviews);
 router.get("/services/:id", services.get);

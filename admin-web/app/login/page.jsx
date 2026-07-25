@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, setAdminToken } from "@/lib/api";
+import { api, setAdminTokens } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,8 +15,8 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
     try {
-      const { token } = await api.login(password);
-      setAdminToken(token);
+      const res = await api.login(password);
+      setAdminTokens(res.accessToken || res.token, res.refreshToken);
       router.replace("/");
     } catch (err) {
       setError("Invalid password");

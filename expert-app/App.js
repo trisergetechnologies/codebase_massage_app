@@ -80,7 +80,12 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <NavigationContainer ref={navRef} theme={navTheme}>
-          <ExpertSessionProvider key={sessionKey} navigationRef={navRef} sessionKey={sessionKey}>
+          <ExpertSessionProvider
+            key={sessionKey}
+            navigationRef={navRef}
+            sessionKey={sessionKey}
+            onSessionEnded={() => setAuthed(false)}
+          >
             <StatusBar style="light" />
             <Stack.Navigator
               initialRouteName={authed ? "MainTabs" : "Login"}

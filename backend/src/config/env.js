@@ -4,7 +4,10 @@ const env = {
   PORT: parseInt(process.env.PORT || "4000", 10),
   MONGO_URI: process.env.MONGO_URI || "mongodb://127.0.0.1:27017/codebase_massage",
   JWT_SECRET: process.env.JWT_SECRET || "dev_secret_change_me",
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "30d",
+  /** @deprecated use JWT_ACCESS_EXPIRES_IN */
+  JWT_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || "15m",
+  JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || process.env.JWT_EXPIRES_IN || "15m",
+  JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
   DEV_BYPASS_OTP: (process.env.DEV_BYPASS_OTP || "true") === "true",
   ADMIN_PASSWORD: process.env.ADMIN_PASSWORD || "admin123",
   EXPO_PUSH_ENABLED: (process.env.EXPO_PUSH_ENABLED || "false") === "true",

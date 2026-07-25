@@ -2,7 +2,7 @@ const asyncHandler = require("express-async-handler");
 const Booking = require("../models/Booking");
 const Expert = require("../models/Expert");
 const env = require("../config/env");
-const { signToken } = require("../middleware/auth");
+const { issueTokenPair } = require("../middleware/auth");
 const { serializeBooking } = require("../lib/serialize");
 const { serializeExpert } = require("../lib/serialize");
 
@@ -12,8 +12,15 @@ const login = asyncHandler(async (req, res) => {
   if (!password || password !== expected) {
     return res.status(401).json({ error: "invalid_credentials" });
   }
-  const token = signToken({ sub: "admin", role: "admin" });
-  res.json({ token, role: "admin" });
+  const pair = await issueTokenPair({ subjectId: "admin", role: "admin", req });
+  res.json({
+    accessToken: pair.accessToken,
+    refreshToken: pair.refreshToken,
+    expiresIn: pair.expiresIn,
+    tokenType: pair.tokenType,
+    token: pair.accessToken,
+    role: "admin",
+  });
 });
 
 const listBookings = asyncHandler(async (req, res) => {

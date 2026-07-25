@@ -1,9 +1,10 @@
 import { io } from "socket.io-client";
 import { API_BASE } from "./config";
-import { getToken } from "./api";
+import { getToken, onAccessTokenRefreshed } from "./services/apiClient";
 
 let socket = null;
 let offerHandler = null;
+let unsubTokenRefresh = null;
 
 export function onDispatchOffer(handler) {
   offerHandler = handler;
@@ -13,11 +14,29 @@ export function onDispatchOffer(handler) {
   }
 }
 
+function ensureTokenRefreshHook() {
+  if (unsubTokenRefresh) return;
+  unsubTokenRefresh = onAccessTokenRefreshed(async () => {
+    if (!socket) return;
+    const token = await getToken();
+    if (!token) return;
+    socket.auth = { token };
+    if (socket.connected) {
+      socket.disconnect().connect();
+    }
+  });
+}
+
 export async function getSocket() {
   const token = await getToken();
   if (!token) throw new Error("missing_token");
 
-  if (socket?.connected) return socket;
+  ensureTokenRefreshHook();
+
+  if (socket?.connected) {
+    socket.auth = { token };
+    return socket;
+  }
 
   if (socket) {
     socket.disconnect();

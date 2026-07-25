@@ -1,5 +1,5 @@
 /** @deprecated Import from services/ — kept for gradual migration */
-export { setToken, getToken, request } from "./services/apiClient";
+export { setToken, setTokens, getToken, getAccessToken, request, logoutRemote } from "./services/apiClient";
 export { authService } from "./services/authService";
 export { expertService } from "./services/expertService";
 export { bookingService } from "./services/bookingService";
