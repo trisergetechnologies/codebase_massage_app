@@ -21,8 +21,15 @@ export function UserMenu() {
     function onDoc(e) {
       if (rootRef.current && !rootRef.current.contains(e.target)) setOpen(false);
     }
+    function onKey(e) {
+      if (e.key === "Escape") setOpen(false);
+    }
     document.addEventListener("mousedown", onDoc);
-    return () => document.removeEventListener("mousedown", onDoc);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDoc);
+      document.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   function signOut() {

@@ -1,35 +1,17 @@
 export const DASHBOARD_ROUTES = {
-
-  "/app/orders": { title: "My Sessions" },
-
-  "/app/addresses": { title: "Where to come?" },
-
-  "/app/profile": { title: "Your profile" },
-
-  "/app/support": { title: "Help" },
-
+  "/app/orders": { title: "My Orders" },
+  "/app/addresses": { title: "My Addresses" },
+  "/app/profile": { title: "Account" },
+  "/app/support": { title: "Support" },
 };
 
-
-
 export function getPageTitle(pathname) {
-
   if (pathname.startsWith("/app/orders/") && pathname !== "/app/orders") {
-
     return "Your booking";
-
   }
-
-  return DASHBOARD_ROUTES[pathname]?.title || "My Sessions";
-
+  return DASHBOARD_ROUTES[pathname]?.title || "My Orders";
 }
-
-
 
 export function isOrderDetailRoute(pathname) {
-
   return /^\/app\/orders\/[^/]+$/.test(pathname);
-
 }
-
-
