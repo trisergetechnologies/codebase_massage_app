@@ -27,8 +27,8 @@ export function HeroSection() {
         aria-hidden
       />
 
-      <div className="relative container-premium pb-16 pt-10 md:pb-24 md:pt-14 lg:pt-16">
-        <div className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr] lg:gap-16">
+      <div className="relative container-premium pb-10 pt-8 md:pb-14 md:pt-10 lg:pt-12">
+        <div className="grid items-center gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:gap-12">
           <div className="animate-fade-up max-w-xl">
             <p className="eyebrow mb-5 inline-flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-accent" aria-hidden />
@@ -47,11 +47,11 @@ export function HeroSection() {
               {brand.headlines.supporting}
             </p>
 
-            <p className="mt-8 text-sm font-medium tracking-wide text-muted">
+            <p className="mt-5 text-sm font-medium tracking-wide text-muted">
               {trustItems.join(" · ")}
             </p>
 
-            <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
               <Link
                 to="/services"
                 className="group inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-accent px-8 text-base font-bold text-white shadow-sm transition hover:bg-accent-hover hover:shadow-md"
@@ -83,7 +83,7 @@ export function HeroSection() {
               />
             </div>
 
-            <div className="absolute -bottom-4 -left-3 hidden w-[42%] overflow-hidden rounded-2xl shadow-premium ring-1 ring-border/50 sm:block md:-left-6">
+            <div className="absolute bottom-3 left-3 hidden w-[min(42%,11rem)] overflow-hidden rounded-2xl shadow-premium ring-1 ring-border/50 sm:block md:bottom-4 md:left-4">
               <img
                 src={HERO_IMAGE_SECONDARY}
                 alt="Peaceful moment of rest at home"

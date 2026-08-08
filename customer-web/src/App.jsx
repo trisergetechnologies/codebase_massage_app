@@ -11,6 +11,7 @@ import { ServicesPage } from "./pages/ServicesPage";
 import { ServiceDetailPage } from "./pages/ServiceDetailPage";
 import { HowItWorksPage } from "./pages/HowItWorksPage";
 import { AboutUsPage } from "./pages/AboutUsPage";
+import { CareersPage } from "./pages/CareersPage";
 import { SupportPage } from "./pages/SupportPage";
 import { LoginRedirect } from "./pages/LoginRedirect";
 import { OrdersPage } from "./pages/dashboard/OrdersPage";
@@ -32,6 +33,7 @@ export default function App() {
                   <Route path="services/:id" element={<ServiceDetailPage />} />
                   <Route path="how-it-works" element={<HowItWorksPage />} />
                   <Route path="about-us" element={<AboutUsPage />} />
+                  <Route path="careers" element={<CareersPage />} />
                   <Route path="support" element={<SupportPage />} />
                   <Route path="login" element={<LoginRedirect />} />
                 </Route>

@@ -89,17 +89,17 @@ export function ServicesSection() {
                     [ Quick Boost 2×2 ] [ Power Up 2×1 ]
                     [                 ] [ Desk 1 ][ Deep 1 ]
         */}
-        <div className="grid grid-cols-1 gap-3 sm:h-[520px] sm:grid-cols-4 sm:grid-rows-2 sm:gap-4 lg:h-[580px]">
+        <div className="grid grid-cols-1 gap-3 sm:h-[480px] sm:grid-cols-4 sm:grid-rows-2 sm:gap-4 lg:h-[540px]">
           {GALLERY.map((service) => (
             <GalleryTile key={service.name} service={service} />
           ))}
         </div>
 
-        <p className="mt-8 text-center text-sm text-muted">
+        <p className="mt-6 text-center text-sm text-muted">
           Not a spa. Not luxury. Not medical treatment — everyday wellness and relaxation at home.
         </p>
 
-        <div className="mt-10 flex justify-center">
+        <div className="mt-8 flex justify-center">
           <Link
             to="/services"
             className="inline-flex min-h-14 items-center justify-center gap-2 rounded-2xl bg-accent px-8 text-base font-bold text-white shadow-md transition hover:bg-accent-hover hover:shadow-lg"

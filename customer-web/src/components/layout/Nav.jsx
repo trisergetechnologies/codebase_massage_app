@@ -21,7 +21,7 @@ function pageLinks(isAuthenticated) {
     { to: "/how-it-works", label: "How it works" },
     { to: "/about-us", label: "About Us" },
     { to: "/support", label: "Support" },
-    { to: "/careers", label: "Career" },
+    { to: "/careers", label: "Careers" },
   ];
 }
 

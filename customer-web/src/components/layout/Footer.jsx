@@ -2,9 +2,28 @@ import { Link } from "react-router-dom";
 import { brand } from "../../content/brand";
 
 const columns = [
-  { title: "Company", links: ["About", "Careers"] },
-  { title: "Support", links: ["Help center", "FAQs"] },
-  { title: "Legal", links: ["Privacy", "Terms", "Contact"] },
+  {
+    title: "Company",
+    links: [
+      { label: "About", to: "/about-us" },
+      { label: "Careers", to: "/careers" },
+    ],
+  },
+  {
+    title: "Support",
+    links: [
+      { label: "Help center", to: "/support" },
+      { label: "FAQs", to: "/support" },
+    ],
+  },
+  {
+    title: "Legal",
+    links: [
+      { label: "Privacy", to: "/support" },
+      { label: "Terms", to: "/support" },
+      { label: "Contact", to: "/support" },
+    ],
+  },
 ];
 
 export function Footer() {
@@ -47,12 +66,12 @@ function FooterCol({ title, links }) {
       <h3 className="text-xs font-semibold uppercase tracking-[0.12em] text-white/50">{title}</h3>
       <ul className="mt-5 space-y-3">
         {links.map((l) => (
-          <li key={l}>
+          <li key={l.label}>
             <Link
-              to="/support"
+              to={l.to}
               className="text-[15px] text-white/70 transition hover:text-white"
             >
-              {l}
+              {l.label}
             </Link>
           </li>
         ))}

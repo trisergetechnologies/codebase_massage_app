@@ -209,7 +209,7 @@ export function ExpertsSection() {
           </ol>
 
           <div
-            className={`mt-14 border-t border-border/70 pt-10 text-center ${
+            className={`mt-10 border-t border-border/70 pt-8 text-center ${
               inView ? "animate-fade-up" : "opacity-0"
             }`}
             style={inView ? { animationDelay: "0.65s" } : undefined}

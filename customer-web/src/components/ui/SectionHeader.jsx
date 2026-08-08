@@ -3,7 +3,7 @@ export function SectionHeader({ label, title, description, align = "center", cla
     align === "left" ? "text-left items-start" : "text-center items-center mx-auto";
 
   return (
-    <header className={`mb-14 md:mb-16 flex max-w-3xl flex-col gap-4 ${alignCls} ${className}`}>
+    <header className={`mb-8 md:mb-10 flex max-w-3xl flex-col gap-3 ${alignCls} ${className}`}>
       {label ? (
         <p className={light ? "eyebrow-light" : "eyebrow"}>{label}</p>
       ) : null}

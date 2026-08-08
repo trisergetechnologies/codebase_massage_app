@@ -123,7 +123,7 @@ export function SafetySection() {
 
           {/* Forest manifesto — Customer Promise */}
           <div
-            className={`relative mt-10 overflow-hidden rounded-3xl bg-forest px-6 py-10 shadow-premium-lg sm:px-10 sm:py-12 md:px-12 md:py-14 ${
+            className={`relative mt-8 overflow-hidden rounded-3xl bg-forest px-6 py-10 shadow-premium-lg sm:px-10 sm:py-12 md:px-12 md:py-14 ${
               inView ? "animate-fade-up animate-delay-3" : "opacity-0"
             }`}
           >
